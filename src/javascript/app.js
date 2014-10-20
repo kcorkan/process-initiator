@@ -7,19 +7,19 @@ Ext.define('CustomApp', {
         {xtype:'container',itemId:'display_box'},
         {xtype:'tsinfolink'}
     ],
+    
     launch: function() {
-        this.down('#message_box').update(this.getContext().getUser());
         
-        var m_name = 'Defect',
-        m_fields = ['Name','State'];
+        var m_process_defintion = Ext.create('Rally.technicalservices.ProcessDefinition',{});
         
-        this._loadAStoreWithAPromise(m_name, m_fields).then({
+        this._loadAStoreWithAPromise(m_process_defintion.rallyType, m_process_defintion.getDisplayFields()).then({
             scope: this,
             success: function(store){
                 this.down('#display_box').add({
                     xtype: 'rallygrid',
                     store: store,
-                    columnCfgs: m_fields
+                    enableBlockedReasonPopover: false,
+                    columnCfgs: m_process_defintion.getColumnConfigurations()
                 });
             },
             failure: function(error_message){

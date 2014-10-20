@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Oct 20 2014 09:57:19 GMT-0700 (PDT) -->
+    <!--  Build Date: Mon Oct 20 2014 12:52:36 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Oct 20 2014 09:57:19 GMT-0700 (PDT)";
-        var CHECKSUM = 1059621044;
+        var APP_BUILD_DATE = "Mon Oct 20 2014 12:52:36 GMT-0700 (PDT)";
+        var CHECKSUM = 6533235686;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -15,6 +15,158 @@
     <script type="text/javascript">
         Rally.onReady(function() {
              
+(function () {
+    var Ext = window.Ext4 || window.Ext;
+    /**
+     * @private
+     * An Ext.AbstractPlugin plugin to add the blocked reason popover to blocked icons on Ext4 Grids.
+     */
+    Ext.define('Rally.technicalservices.grid.plugin.Process', {
+        extend: 'Ext.AbstractPlugin',
+        alias: 'plugin.rallytsprocesspopoverplugin',
+        mixins: {
+            messageable: 'Rally.Messageable',
+            observable: 'Ext.util.Observable'
+        },
+        requires: [
+            'Rally.technicalservices.popover.Process'
+        ],
+
+        init: function (grid) {
+            this.grid = grid;
+            this.grid.mon(this.grid, 'viewready', this._attachPopovers, this, {single:true});
+        },
+
+        /**
+         * @private
+         */
+        _attachPopovers: function () {
+            this.mun(this.grid, 'cellClick', this._onClick, this, {stopEvent: true});
+            this.mon(this.grid, 'cellClick', this._onClick, this, {stopEvent: true});
+        },
+
+        _onClick: function(view, cell, colIdx, record, row, rowIdx, event) {
+            var el = Ext.get(cell);
+            var targetEl = Ext.get(event.getTarget());
+
+            if (this._isClickableBlockedIcon(targetEl) && this.eventInProcess !== true) {
+                this.eventInProcess = true;
+                
+                var blocked = record.get('Blocked');
+                if (!blocked && !record.get('updatable')) {
+                    return;
+                }
+
+                //cell gets rerendered when Blocked is changed on the record, so the el we have no is not necessarily the one we will have when creating the popover
+                var target = '#' + el.up('.' + Ext.baseCSSPrefix + 'grid-row').id + ' .blocked, #' + el.up('.' + Ext.baseCSSPrefix + 'grid-row').id + ' .blockable';
+                
+                this._blockOrUnblockIfNeeded(record, blocked).then({
+                    success: function(args) {
+                        if (this._shouldShowPopover(record)){
+                            this._createPopover(args.record, blocked, target, rowIdx);
+                        } else {
+                            this.publish(Rally.Message.objectUpdate, args.record, ['Blocked']);
+                        }
+                    },
+                    failure: function(args) {
+                        this._showFailure(args.error);
+                    },
+                    scope: this
+                }).always(function() {
+                    this.eventInProcess = false;
+                }, this);
+            }
+        },
+
+        _isClickableBlockedIcon: function(targetEl) {
+            return targetEl.hasCls('clickable') && (targetEl.hasCls('blockable') || targetEl.hasCls('blocked'));
+        },
+
+        _blockOrUnblockIfNeeded: function(record, blocked) {
+            var deferred = new Deft.Deferred();
+
+            if (this._needsToBeBlocked(record, blocked)) {
+                record.set('Blocked', true);
+                this._save(deferred, record);
+            } else if (this._needsToBeUnblocked(record, blocked)) {
+                record.set('Blocked', false);
+                this._save(deferred, record);
+            } else {
+                deferred.resolve({record:record});
+            }
+
+            return deferred.promise;
+        },
+
+        _save: function(deferred, record){
+            record.save({
+                success: function (updatedRecord) {
+                    deferred.resolve({record:updatedRecord});
+                    this._attachPopovers();  //cell gets rerendered when Blocked is changed on the record
+                },
+                failure: function (updatedRecord, operation) {
+                    var error = operation.error.errors[0];
+                    record.reject();
+                    deferred.reject({error:error});
+                    this._attachPopovers();  //cell gets rerendered when Blocked is changed on the record
+                },
+                params: {
+                    fetch: record.store ? record.store.fetch : [fieldName]
+                },
+                scope: this
+            });
+        },
+
+        _createPopover: function(record, blocked, target, rowIndex) {
+            var el = Ext.get(Ext.query(target)[0]);
+            el.removeCls('blockable').addCls('blocked');
+            var targetData = this._getTarget(el, blocked, rowIndex);
+            Ext.create('Rally.ui.popover.BlockedReasonPopover', {
+                target: targetData.target,
+                targetSelector: targetData.targetSelector,
+                record: record,
+                isEditing: this._needsToBeBlocked(record, blocked)
+            });
+        },
+
+        _showFailure: function(error) {
+            Rally.ui.notify.Notifier.showError({
+                message: 'An error occurred while saving your changes. ' + error,
+                timeout: 5000
+            });
+        },
+
+        _shouldShowPopover: function(record){
+            return !record.self.getField('BlockedReason').hidden;
+        },
+
+        _needsToBeUnblocked: function(record, blocked){
+            return record.get('updatable') && blocked && !this._shouldShowPopover(record);
+        },
+
+        _needsToBeBlocked: function(record, blocked) {
+            return record.get('updatable') && !blocked;
+        },
+
+        /**
+         * @private
+         * @param {Ext.Element} el
+         */
+        _getRecordFor: function (el) {
+            var row = el.up('.' + Ext.baseCSSPrefix + 'grid-row');
+            return row ? this.grid.getStore().getAt(row.dom.rowIndex - 1) : null;
+        },
+
+        _getTarget: function(el, blocked, rowIndex) {
+            if (blocked) {
+                return {target:el, targetSelector:el.id};
+            } else {
+                var selector = '#' + this.grid.getEl().id + ' .x-grid3-row:nth-child(' + (rowIndex + 1) + ') img.blocked';
+                return {target:el, targetSelector:selector};
+            }
+        }
+    });
+})();
 /**
  * A link that pops up a version dialog box
  */
@@ -138,6 +290,211 @@ Ext.define('Rally.technicalservices.Logger',{
 
 });
 
+Ext.define('Rally.technicalservices.ProcessDefinition',{
+    constructor: function(config){
+        Ext.apply(this,config);
+    },
+    processName: 'Blocked',
+    processType: 'Required Fields',
+    rallyType: 'Defect',
+    rallyField: 'Blocked',
+    rallyFieldValue: true,
+    parameters: ['Notes'],
+    getDisplayFields: function(){
+    	return ['FormattedID','Name',this.rallyField];
+    },
+    getColumnConfigurations: function(){
+    	var rally_field_col = {};
+    	if (this.rallyField == 'Blocked'){
+    		rally_field_col = { 
+				 scope: this,
+				 xtype:'actioncolumn',
+				 items: [{
+				     icon: '/slm/images/blocked.gif',
+				     tooltip: 'Block',
+				     scope: this,
+				     value: true,
+				     handler: this._initiateProcess
+				 }]
+    		};
+    	} 
+    	
+     	var columns = [{ 
+             text: 'FormattedID',
+             dataIndex: 'FormattedID',
+         },{
+             text: 'Name',
+             dataIndex: 'Name',
+             flex: 1
+         }, 
+         rally_field_col];
+     return columns;        
+    },
+    _initiateProcess: function(){
+    	alert ('process');
+    }
+    
+   
+});
+
+(function() {
+    var Ext = window.Ext4 || window.Ext;
+
+    /**
+     * @private
+     * Displays blocked reason popover
+     */
+    Ext.define('Rally.technicalservices.popover.Process', {
+        alias: 'widget.rallytsprocesspopover',
+        extend: 'Rally.ui.popover.Popover',
+        requires: [
+            'Rally.ui.blockedreason.BlockedReason'
+        ],
+        mixins: [
+            'Rally.Messageable'
+        ],
+
+        clientMetrics: [
+            {
+                event: 'show',
+                description: 'blockedreason popover opened'
+            },
+            {
+                method: 'onHide',
+                description: 'blockedreason popover closed'
+            },
+            {
+                beginMethod: '_fetchRecord',
+                endMethod: '_onDataRetrieved',
+                description: 'fetching the record'
+            }
+        ],
+
+        cls: 'blocked-reason-popover',
+        width: 320,
+
+        offsetFromTarget:[{x:0, y:-10}, {x:15, y:0}, {x:0, y:10}, {x:-15, y:0}],
+
+        config: {
+            isEditing: false,
+            record: null,
+            oid: null,
+            type: null,
+            noOp: false,
+            startingReason: null
+        },
+
+        constructor: function(config) {
+            Ext.apply(this.config, config);
+
+            this.callParent(arguments);
+
+            if (this._needToFetchRecord(config)) {
+                this._fetchRecord(config);
+            } else {
+                this._addBlockedReasonComponent();
+            }
+        },
+
+        afterLayout: function(event) {
+            this.callParent(arguments);
+            if (event.layoutCount === event.triggerCount) {
+                this.fireEvent('rendercomplete');
+
+                if (this.isEditing) {
+                    this.getComponent('blockedReasonContainer').fireEvent('startEdit', this.record, this.startingReason);
+                }
+            }
+        },
+
+        _needToFetchRecord: function(config) {
+            //  Trying to make this understandable, not as terse as it could be
+            if (this.noOp) {
+                return false;
+            }
+
+            if (!config.record || !config.record.store || !config.record.store.fetch) {
+                return true;
+            }
+
+            if (!this._hasFetchField(config.record.store, 'Blocked')) {
+                return true;
+            }
+
+            if (this._hasFetchField(config.record.store, 'BlockedReason')) {
+                return false;
+            }
+
+            if (config.record.data && config.record.data.BlockedReason !== '') {
+                return false;
+            }
+
+            return true;
+        },
+
+        _hasFetchField: function(store, fieldName) {
+            return _.indexOf(store.fetch, fieldName) !== -1;
+        },
+
+        _blockedReasonConfig: function(record) {
+            var me = this;
+
+            return {
+                xtype: 'rallyblockedreason',
+                itemId: 'blockedReasonContainer',
+                record: record,
+                isEditing: this.isEditing,
+                noOp: this.noOp,
+                startingReason: this.startingReason,
+                contentHeight: '100%',
+                tplCls: 'rally-blocked-reason-content-popover',
+                listeners: {
+                    editorclosed: function() {
+                        me.destroy();
+                    }
+                }
+            };
+        },
+
+        _fetchRecord: function(config) {
+            this.oid = config.oid || config.record.get('ObjectID');
+
+            Rally.data.ModelFactory.getModel({
+                wsapiVersion: 'v2.x',
+                type: config.type || config.record.get('_type'),
+                requester: this,
+                success: this._onModelRetrieved,
+                scope: this
+            });
+        },
+
+        _onModelRetrieved: function(model) {
+            model.load(this.oid, {
+                fetch: ["Blocked", "BlockedReason", "WorkProduct"],
+                callback: this._onDataRetrieved,
+                scope: this
+            });
+        },
+
+        _onDataRetrieved: function(result, operation) {
+            if (operation.wasSuccessful() && result) {
+                this.record = result;
+                this._addBlockedReasonComponent();
+            } else {
+                this.destroy();
+            }
+
+            // Need this to make sure we'll load the record to prevent the test finishing before the data is loaded.
+            if(Rally.BrowserTest) {
+                Rally.BrowserTest.publishComponentReady(this);
+            }
+        },
+
+        _addBlockedReasonComponent: function() {
+            this.add(this._blockedReasonConfig(this.record));
+        }
+    });
+})();
 Ext.define('CustomApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
@@ -147,19 +504,19 @@ Ext.define('CustomApp', {
         {xtype:'container',itemId:'display_box'},
         {xtype:'tsinfolink'}
     ],
+    
     launch: function() {
-        this.down('#message_box').update(this.getContext().getUser());
         
-        var m_name = 'Defect',
-        m_fields = ['Name','State'];
+        var m_process_defintion = Ext.create('Rally.technicalservices.ProcessDefinition',{});
         
-        this._loadAStoreWithAPromise(m_name, m_fields).then({
+        this._loadAStoreWithAPromise(m_process_defintion.rallyType, m_process_defintion.getDisplayFields()).then({
             scope: this,
             success: function(store){
                 this.down('#display_box').add({
                     xtype: 'rallygrid',
                     store: store,
-                    columnCfgs: m_fields
+                    enableBlockedReasonPopover: false,
+                    columnCfgs: m_process_defintion.getColumnConfigurations()
                 });
             },
             failure: function(error_message){
