@@ -4,15 +4,15 @@ Ext.define('CustomApp', {
     logger: new Rally.technicalservices.Logger(),
     items: [
         {xtype:'container',itemId:'message_box',tpl:'Hello, <tpl>{_refObjectName}</tpl>'},
-        {xtype:'container',itemId:'display_box'},
+        {xtype:'container',itemId:'button_box', padding: 10},
+        {xtype:'container',itemId:'grid_box'},
         {xtype:'tsinfolink'}
     ],
     
     launch: function() {
       // Hardcoded process definitions  
     	var process_detail = {
-    			'true': ['Notes','Iteration','Owner'],
-    			'false':['Description']
+    			'true': ['Notes','Iteration','Release']
     	};
 
         var process_definition = Ext.create('Rally.technicalservices.ProcessDefinition',{
@@ -24,17 +24,23 @@ Ext.define('CustomApp', {
         });
         //END Hardcoded process definitions
         
+        this.down('#button_box').add({
+        	xtype: 'rallybutton',
+        	text: '+Add New',
+        	cls: 'primary small',
+        	scope: this,
+        	handler: process_driver.addNew	
+        });
+        
         this._loadAStoreWithAPromise(process_definition.rallyType, process_driver.getFetchFields()).then({
             scope: this,
             success: function(store){
-                this.down('#display_box').add({
+                this.down('#grid_box').add({
                     xtype: 'rallygrid',
                     store: store,
                     enableBlockedReasonPopover: false,
                     columnCfgs: process_driver.getColumnConfigurations()
                 });
-
-
             },
             failure: function(error_message){
                 alert(error_message);

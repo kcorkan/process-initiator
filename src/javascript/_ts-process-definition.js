@@ -3,6 +3,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
         Ext.apply(this,config);
     },
     processName: 'The Blocked Process',
+    shortName: 'Block',
     processType: 'Required Fields',
     rallyType: 'Defect',
     rallyField: 'Blocked',
@@ -18,7 +19,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	}
     	console.log('req-fields',req_fields);
     	if (Ext.Array.contains(req_fields, detail_field)){
-    		if (detail_value.length > 0){
+    		if (detail_value && detail_value.length > 0){
     			return {valid: true};  
     		}
     	} else {
