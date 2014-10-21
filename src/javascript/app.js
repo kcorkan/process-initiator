@@ -15,7 +15,6 @@ Ext.define('CustomApp', {
         var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
             processName: 'The Blocked Process',
             shortName: 'Block',
-            processType: 'Required Fields',
             rallyType: rally_type,
             rallyField: 'Blocked',
         	processDetail: {
@@ -25,7 +24,6 @@ Ext.define('CustomApp', {
         var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
             processName: 'Some other process',
             shortName: 'Change State',
-            processType: 'Required Fields',
             rallyType: rally_type,
             rallyField: 'State',
         	processDetail: {

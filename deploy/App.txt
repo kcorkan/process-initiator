@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Oct 21 2014 12:51:44 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Oct 21 2014 14:00:06 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Oct 21 2014 12:51:44 GMT-0700 (PDT)";
-        var CHECKSUM = 8587910467;
+        var APP_BUILD_DATE = "Tue Oct 21 2014 14:00:06 GMT-0700 (PDT)";
+        var CHECKSUM = 9854122798;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -139,27 +139,69 @@ Ext.define('Rally.technicalservices.Logger',{
 });
 
 Ext.define('Rally.technicalservices.ProcessDefinition',{
-    
-    processName: 'The Blocked Process',
-    shortName: 'Block',
-    processType: 'Required Fields',
-    rallyType: 'Defect',
-    rallyField: 'Blocked',
+    logger: new Rally.technicalservices.Logger(),
+    processName: '',
+    shortName: '',
+    rallyType: null,  //Required
+    /*
+     * rallyField:  The field that the processDetail rules belong to.  If this is null, then 
+     * this process definition applies to new objects.  
+     * 
+     */
+    rallyField: null,
+    /*
+     * processDetail: The rules for this process
+     * 
+     *    EXAMPLE:
+     *    {
+     *    	type:  presence | inclusion* | exclusion* | format*   (*not implemented yet),
+     *      field:  the field that the rule is applied to (e.g. FixedInBuild),
+     *      triggerValues: [] Array of values that trigger this rule (e.g. ['Fixed', 'Closed'];  If this is empty, then it applies to all objects
+     *    }
+     * 
+     */
     processDetail: {}, 
+    
 
     constructor: function(config){
         Ext.apply(this,config);
     },
     
+    /*
+     * getProcessFields: returns the fields that are defined in all the rules for the current process
+     * 
+     */
+    getProcessFields: function(){
+    	var fields = [];
+    	if (this.rallyField){
+    		fields.push(this.rallyField);
+    	}
+    	Ext.each(Object.keys(this.processDetail), function(pdkey){
+			Ext.each(this.processDetail[pdkey], function(pdd){
+				fields.push(pdd);
+			}, this);
+		}, this);
+    	this.logger.log('getProcessFields', fields);
+    	return fields; 
+    },
+    /*
+     * getRelevantProcessFields: returns the fields that are triggered by for the current value of the process field
+     * 
+     */
+    getRelevantProcessFields: function(value){
+    	
+    },
+    
     validate: function(value, detail_field, detail_value){
+    	this.logger.log('validate',value,detail_field,detail_value);
     	var req_fields = [];
-    	console.log('validate',value, Object.keys(this.processDetail),value, this.processDetail);
+    	
     	if (Ext.Array.contains(Object.keys(this.processDetail), value.toString())){
         	req_fields = this.processDetail[value.toString()];
     	} else {
     		req_fields = this.processDetail['ALL'];
     	}
-    	console.log('req-fields',req_fields);
+
     	if (Ext.Array.contains(req_fields, detail_field)){
     		if (detail_value && detail_value.length > 0){
     			return {valid: true};  
@@ -172,13 +214,20 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
 
     }
     
-//    validations: [
-//                  {type: 'presence',  field: 'age'},
-//                  {type: 'length',    field: 'name',     min: 2},
-//                  {type: 'inclusion', field: 'gender',   list: ['Male', 'Female']},
-//                  {type: 'exclusion', field: 'username', list: ['Admin', 'Operator']},
-//                  {type: 'format',    field: 'username', matcher: /([a-z]+)[0-9]{2,3}/}
-//              ]
+/*
+ * This is just an example of validations in the model object.  
+ * Trying to make the processDetail similiar so that someday we may be able to take
+ * advantage of this functionality
+ * 
+ * validations: [
+ *	                {type: 'presence',  field: 'age'},
+ *                  {type: 'length',    field: 'name',     min: 2},
+ *                  {type: 'inclusion', field: 'gender',   list: ['Male', 'Female']},
+ *                  {type: 'exclusion', field: 'username', list: ['Admin', 'Operator']},
+ *                  {type: 'format',    field: 'username', matcher: /([a-z]+)[0-9]{2,3}/}
+ *               ]
+ * 
+ */ 
     
 });
 
@@ -189,10 +238,11 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     logger: new Rally.technicalservices.Logger(),
     autoShow: true,
     draggable: true,
-    width: 300,
+    width: 400,
     processDefinition: null,
     record: null,
     projectRef: null,
+    
     constructor: function(config){
         Ext.apply(this,config);
         //Todo verify record and p-def are not null
@@ -200,7 +250,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
          this.items = this._buildItems(this.record, this.processDefinition);
          this.logger.log('ProcessDefinition dialog constructor', this.title, this.items);
          this.callParent(arguments);
-         
+         console.log(this.record.get(this.processDefinition.rallyField));
          this.down('#' + this.processDefinition.rallyField).setValue(this.record.get(this.processDefinition.rallyField));
     },
     _buildItems: function(rec, pdef){
@@ -237,7 +287,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
 
     },
     _getProcessFieldComponent: function(rec){
-    	this.logger.log('_getProcessFieldComponent');
+    	this.logger.log('_getProcessFieldComponent', rec);
     	
     	var field_value = rec.get(this.processDefinition.rallyField);
     	var field = rec.getField(this.processDefinition.rallyField)
@@ -249,7 +299,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	} else { //Dropdown list
         	component['listeners'] = {
                 	scope: this,
-                	select: this._processFieldChanged
+                	change: this._processFieldChanged
                 };
     	}
     	return component;
@@ -338,6 +388,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
          if (field.attributeDefinition.ReadOnly == true){
         //we need to do something with read only
          }
+         this.logger.log('value', val);
         if (val.length > 0){
         	component['value'] = val;
         }
@@ -406,13 +457,9 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     	this.logger.log('getFetchFields');
     	var fetch_fields = this.static_fields;
     	Ext.each(this.processDefinitions, function(pd){
-    		fetch_fields.push(pd.rallyField);
-    			Ext.each(Object.keys(pd.processDetail), function(pdkey){
-    				Ext.each(pd.processDetail[pdkey], function(pdd){
-    	    			fetch_fields.push(pdd);
-    				}, this);
-    			}, this);
+    		fetch_fields = (Ext.Array.merge(fetch_fields,pd.getProcessFields()));
     	}, this);
+    	this.logger.log(fetch_fields);
     	return fetch_fields;
     },
 /*
@@ -498,7 +545,6 @@ Ext.define('CustomApp', {
         var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
             processName: 'The Blocked Process',
             shortName: 'Block',
-            processType: 'Required Fields',
             rallyType: rally_type,
             rallyField: 'Blocked',
         	processDetail: {
@@ -508,7 +554,6 @@ Ext.define('CustomApp', {
         var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
             processName: 'Some other process',
             shortName: 'Change State',
-            processType: 'Required Fields',
             rallyType: rally_type,
             rallyField: 'State',
         	processDetail: {

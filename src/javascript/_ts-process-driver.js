@@ -36,13 +36,9 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     	this.logger.log('getFetchFields');
     	var fetch_fields = this.static_fields;
     	Ext.each(this.processDefinitions, function(pd){
-    		fetch_fields.push(pd.rallyField);
-    			Ext.each(Object.keys(pd.processDetail), function(pdkey){
-    				Ext.each(pd.processDetail[pdkey], function(pdd){
-    	    			fetch_fields.push(pdd);
-    				}, this);
-    			}, this);
+    		fetch_fields = (Ext.Array.merge(fetch_fields,pd.getProcessFields()));
     	}, this);
+    	this.logger.log(fetch_fields);
     	return fetch_fields;
     },
 /*

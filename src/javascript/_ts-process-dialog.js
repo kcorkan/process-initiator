@@ -3,10 +3,11 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     logger: new Rally.technicalservices.Logger(),
     autoShow: true,
     draggable: true,
-    width: 300,
+    width: 400,
     processDefinition: null,
     record: null,
     projectRef: null,
+    
     constructor: function(config){
         Ext.apply(this,config);
         //Todo verify record and p-def are not null
@@ -14,7 +15,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
          this.items = this._buildItems(this.record, this.processDefinition);
          this.logger.log('ProcessDefinition dialog constructor', this.title, this.items);
          this.callParent(arguments);
-         
+         console.log(this.record.get(this.processDefinition.rallyField));
          this.down('#' + this.processDefinition.rallyField).setValue(this.record.get(this.processDefinition.rallyField));
     },
     _buildItems: function(rec, pdef){
@@ -51,7 +52,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
 
     },
     _getProcessFieldComponent: function(rec){
-    	this.logger.log('_getProcessFieldComponent');
+    	this.logger.log('_getProcessFieldComponent', rec);
     	
     	var field_value = rec.get(this.processDefinition.rallyField);
     	var field = rec.getField(this.processDefinition.rallyField)
@@ -63,7 +64,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	} else { //Dropdown list
         	component['listeners'] = {
                 	scope: this,
-                	select: this._processFieldChanged
+                	change: this._processFieldChanged
                 };
     	}
     	return component;
@@ -152,6 +153,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
          if (field.attributeDefinition.ReadOnly == true){
         //we need to do something with read only
          }
+         this.logger.log('value', val);
         if (val.length > 0){
         	component['value'] = val;
         }
