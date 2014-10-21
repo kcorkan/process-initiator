@@ -3,10 +3,10 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2013 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Oct 20 2014 12:52:36 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Oct 21 2014 11:05:07 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Oct 20 2014 12:52:36 GMT-0700 (PDT)";
+        var APP_BUILD_DATE = "Tue Oct 21 2014 11:05:07 GMT-0700 (PDT)";
         var CHECKSUM = [%= checksum %];
     </script>
     

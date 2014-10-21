@@ -9,18 +9,32 @@ Ext.define('CustomApp', {
     ],
     
     launch: function() {
+      // Hardcoded process definitions  
+    	var process_detail = {
+    			'true': ['Notes','Iteration','Owner'],
+    			'false':['Description']
+    	};
+
+        var process_definition = Ext.create('Rally.technicalservices.ProcessDefinition',{
+        	processDetail: process_detail
+        });
+        var process_driver = Ext.create('Rally.technicalservices.ProcessDriver',{
+        	processDefinitions: [process_definition],
+        	projectRef: this.getContext().getProjectRef()
+        });
+        //END Hardcoded process definitions
         
-        var m_process_defintion = Ext.create('Rally.technicalservices.ProcessDefinition',{});
-        
-        this._loadAStoreWithAPromise(m_process_defintion.rallyType, m_process_defintion.getDisplayFields()).then({
+        this._loadAStoreWithAPromise(process_definition.rallyType, process_driver.getFetchFields()).then({
             scope: this,
             success: function(store){
                 this.down('#display_box').add({
                     xtype: 'rallygrid',
                     store: store,
                     enableBlockedReasonPopover: false,
-                    columnCfgs: m_process_defintion.getColumnConfigurations()
+                    columnCfgs: process_driver.getColumnConfigurations()
                 });
+
+
             },
             failure: function(error_message){
                 alert(error_message);
