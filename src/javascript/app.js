@@ -11,15 +11,33 @@ Ext.define('CustomApp', {
     
     launch: function() {
       // Hardcoded process definitions  
-    	var process_detail = {
+    	var rally_type = 'Defect';
+        var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+            processName: 'The Blocked Process',
+            shortName: 'Block',
+            processType: 'Required Fields',
+            rallyType: rally_type,
+            rallyField: 'Blocked',
+        	processDetail: {
     			'true': ['Notes','Iteration','Release']
-    	};
-
-        var process_definition = Ext.create('Rally.technicalservices.ProcessDefinition',{
-        	processDetail: process_detail
+        	}
         });
+        var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+            processName: 'Some other process',
+            shortName: 'Change State',
+            processType: 'Required Fields',
+            rallyType: rally_type,
+            rallyField: 'State',
+        	processDetail: {
+    			'Fixed': ['FixedInBuild','VerifiedInBuild'],
+    			'Submitted': ['FoundInBuild']
+        	}
+        });
+       
+        
+        
         var process_driver = Ext.create('Rally.technicalservices.ProcessDriver',{
-        	processDefinitions: [process_definition],
+        	processDefinitions: [pd1,pd2],
         	projectRef: this.getContext().getProjectRef()
         });
         //END Hardcoded process definitions
@@ -32,7 +50,7 @@ Ext.define('CustomApp', {
         	handler: process_driver.addNew	
         });
         
-        this._loadAStoreWithAPromise(process_definition.rallyType, process_driver.getFetchFields()).then({
+        this._loadAStoreWithAPromise(rally_type, process_driver.getFetchFields()).then({
             scope: this,
             success: function(store){
                 this.down('#grid_box').add({

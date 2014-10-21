@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Oct 21 2014 12:30:13 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Oct 21 2014 12:51:44 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Oct 21 2014 12:30:13 GMT-0700 (PDT)";
-        var CHECKSUM = 8268062565;
+        var APP_BUILD_DATE = "Tue Oct 21 2014 12:51:44 GMT-0700 (PDT)";
+        var CHECKSUM = 8587910467;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -139,16 +139,18 @@ Ext.define('Rally.technicalservices.Logger',{
 });
 
 Ext.define('Rally.technicalservices.ProcessDefinition',{
-    constructor: function(config){
-        Ext.apply(this,config);
-    },
+    
     processName: 'The Blocked Process',
     shortName: 'Block',
     processType: 'Required Fields',
     rallyType: 'Defect',
     rallyField: 'Blocked',
-    rallyFieldType: 'boolean',
     processDetail: {}, 
+
+    constructor: function(config){
+        Ext.apply(this,config);
+    },
+    
     validate: function(value, detail_field, detail_value){
     	var req_fields = [];
     	console.log('validate',value, Object.keys(this.processDetail),value, this.processDetail);
@@ -261,6 +263,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	this.record.set(this.processDefinition.rallyField,ctl.getValue());
     	
     	Ext.each(detail_fields, function(df){
+    		this.logger.log('_processFieldChanged => detail_field', df);
         	var field_obj = this.record.getField(df);
         	var field_val = this.record.get(df);
         	var detail_component = this._getFieldComponent(field_obj, field_val);
@@ -284,7 +287,11 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			component['xtype'] = 'textareafield';
     			break;
     		case 'STRING':
-    			if (field_def.attributeDefinition.AllowedValues.length > 0){
+    		case 'STATE':
+    		case 'RATING':
+    			console.log(field.attributeDefinition.AllowedValues);
+    			if (field.attributeDefinition.AttributeType == 'RATING' || 
+    					field.attributeDefinition.AllowedValues.length > 0){
     				component['xtype'] = 'rallyfieldvaluecombobox';
     				component['model'] = this.processDefinition.rallyType;
     				component['field'] = field.name;
@@ -317,12 +324,11 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			}
     			break;
     		case 'QUANTITY':
-    		case 'STATE':
-    			//States
+   // 		case 'STATE':
     		case 'WEB_LINK':
     			
     		//These should not be options for this 
-    		case 'RATING':
+    		//case 'RATING':
     		case 'RAW':
     		case 'BINARY_DATA':
     		case 'COLLECTION':
@@ -427,19 +433,7 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
         }]; 
     	
     	Ext.each(this.processDefinitions, function(pd){
-//    		var process_col = { 
-//				 scope: this,
-//				 xtype:'actioncolumn',
-//				 text: pd.rallyField,
-//				 items: [{
-//				     icon: '/slm/images/blocked.gif',
-//				     tooltip: 'Block',
-//				     scope: this,
-//				     value: true,
-//				     handler: this._initiateProcessDialog,
-//				     dataIndex: pd.rallyField
-//				 }]
-//    		};
+
     		var process_col = {
                 width: 75,    
                 renderer: function (v, m, rec, row, col) {
@@ -500,15 +494,33 @@ Ext.define('CustomApp', {
     
     launch: function() {
       // Hardcoded process definitions  
-    	var process_detail = {
+    	var rally_type = 'Defect';
+        var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+            processName: 'The Blocked Process',
+            shortName: 'Block',
+            processType: 'Required Fields',
+            rallyType: rally_type,
+            rallyField: 'Blocked',
+        	processDetail: {
     			'true': ['Notes','Iteration','Release']
-    	};
-
-        var process_definition = Ext.create('Rally.technicalservices.ProcessDefinition',{
-        	processDetail: process_detail
+        	}
         });
+        var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+            processName: 'Some other process',
+            shortName: 'Change State',
+            processType: 'Required Fields',
+            rallyType: rally_type,
+            rallyField: 'State',
+        	processDetail: {
+    			'Fixed': ['FixedInBuild','VerifiedInBuild'],
+    			'Submitted': ['FoundInBuild']
+        	}
+        });
+       
+        
+        
         var process_driver = Ext.create('Rally.technicalservices.ProcessDriver',{
-        	processDefinitions: [process_definition],
+        	processDefinitions: [pd1,pd2],
         	projectRef: this.getContext().getProjectRef()
         });
         //END Hardcoded process definitions
@@ -521,7 +533,7 @@ Ext.define('CustomApp', {
         	handler: process_driver.addNew	
         });
         
-        this._loadAStoreWithAPromise(process_definition.rallyType, process_driver.getFetchFields()).then({
+        this._loadAStoreWithAPromise(rally_type, process_driver.getFetchFields()).then({
             scope: this,
             success: function(store){
                 this.down('#grid_box').add({

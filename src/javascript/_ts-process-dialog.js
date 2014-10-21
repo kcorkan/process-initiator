@@ -77,6 +77,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	this.record.set(this.processDefinition.rallyField,ctl.getValue());
     	
     	Ext.each(detail_fields, function(df){
+    		this.logger.log('_processFieldChanged => detail_field', df);
         	var field_obj = this.record.getField(df);
         	var field_val = this.record.get(df);
         	var detail_component = this._getFieldComponent(field_obj, field_val);
@@ -100,7 +101,11 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			component['xtype'] = 'textareafield';
     			break;
     		case 'STRING':
-    			if (field_def.attributeDefinition.AllowedValues.length > 0){
+    		case 'STATE':
+    		case 'RATING':
+    			console.log(field.attributeDefinition.AllowedValues);
+    			if (field.attributeDefinition.AttributeType == 'RATING' || 
+    					field.attributeDefinition.AllowedValues.length > 0){
     				component['xtype'] = 'rallyfieldvaluecombobox';
     				component['model'] = this.processDefinition.rallyType;
     				component['field'] = field.name;
@@ -133,12 +138,11 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			}
     			break;
     		case 'QUANTITY':
-    		case 'STATE':
-    			//States
+   // 		case 'STATE':
     		case 'WEB_LINK':
     			
     		//These should not be options for this 
-    		case 'RATING':
+    		//case 'RATING':
     		case 'RAW':
     		case 'BINARY_DATA':
     		case 'COLLECTION':

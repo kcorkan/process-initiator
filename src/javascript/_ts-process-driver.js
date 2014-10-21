@@ -63,19 +63,7 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
         }]; 
     	
     	Ext.each(this.processDefinitions, function(pd){
-//    		var process_col = { 
-//				 scope: this,
-//				 xtype:'actioncolumn',
-//				 text: pd.rallyField,
-//				 items: [{
-//				     icon: '/slm/images/blocked.gif',
-//				     tooltip: 'Block',
-//				     scope: this,
-//				     value: true,
-//				     handler: this._initiateProcessDialog,
-//				     dataIndex: pd.rallyField
-//				 }]
-//    		};
+
     		var process_col = {
                 width: 75,    
                 renderer: function (v, m, rec, row, col) {

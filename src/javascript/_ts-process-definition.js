@@ -1,14 +1,16 @@
 Ext.define('Rally.technicalservices.ProcessDefinition',{
-    constructor: function(config){
-        Ext.apply(this,config);
-    },
+    
     processName: 'The Blocked Process',
     shortName: 'Block',
     processType: 'Required Fields',
     rallyType: 'Defect',
     rallyField: 'Blocked',
-    rallyFieldType: 'boolean',
     processDetail: {}, 
+
+    constructor: function(config){
+        Ext.apply(this,config);
+    },
+    
     validate: function(value, detail_field, detail_value){
     	var req_fields = [];
     	console.log('validate',value, Object.keys(this.processDetail),value, this.processDetail);
