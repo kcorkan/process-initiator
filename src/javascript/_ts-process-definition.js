@@ -21,8 +21,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
      * 
      */
     processDetail: {}, 
-    
-
+ 
     constructor: function(config){
         Ext.apply(this,config);
     },
@@ -41,15 +40,14 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
 				fields.push(pdd);
 			}, this);
 		}, this);
-    	this.logger.log('getProcessFields', fields);
     	return fields; 
     },
     /*
-     * getRelevantProcessFields: returns the fields that are triggered by for the current value of the process field
+     * getTriggeredProcessFields: returns the fields that are triggered by for the current value of the process field
      * 
      */
-    getRelevantProcessFields: function(value){
-    	
+    getTriggeredProcessFields: function(value){
+    	return this.processDetail[value];
     },
     
     validate: function(value, detail_field, detail_value){

@@ -83,14 +83,44 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     	
      return columns;        
     },
+    _getArtifactType: function(){
+   	 return this.processDefinitions[0].rallyType;
+    },
+    _getNewArtifactProcessDefinition: function(){
+      	 this.logger.log('_getNewArtifactProcessDefinition');
+//   	 Ext.each(this.processDefinitions, function(pd){
+//      		 if (pd.rallyField == null || 
+//      			 pd.rallyField.length == 0 || 
+//      			 pd.rallyField == undefined){
+//      			 return pd;
+//      		 }
+//      	 },this);
+      	 return {};  
+       },
+
     /*
      * addNew:  Adds a new artifact based on the process definition rules.  If there
      * is no process definition for add new, then it should launch the artifact add new window. 
      */
     addNew: function(){
-    	this.logger.log('addNew');
-    	alert('addNew');
-    },
+//    	this.logger.log('addNew');
+    	
+    	var new_pd = {};
+    	if (_.isEmpty({})){
+    		//kick off a new object.
+    		Rally.nav.Manager.create(this._getArtifactType());
+
+     	} else {
+       	   	dlg = Ext.create('Rally.technicalservices.dialog.Process', {
+      	   	     processDefinition: new_pd,
+      	   	     projectRef: this.projectRef
+         	 	});
+       	   	dlg.show();
+
+    	}
+    	
+     },
+ 
     /*
      * _initiateProcessDialog:  launches the process dialog for the selected process and record. 
      */

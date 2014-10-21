@@ -74,7 +74,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	this.down('#detail-container').removeAll();
     	this.down('#message_box').update('');
 
-    	var detail_fields = this.processDefinition.processDetail[ctl.getValue().toString()];
+    	var detail_fields = this.processDefinition.getTriggeredProcessFields(ctl.getValue().toString());
     	this.record.set(this.processDefinition.rallyField,ctl.getValue());
     	
     	Ext.each(detail_fields, function(df){

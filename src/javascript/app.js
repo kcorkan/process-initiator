@@ -40,13 +40,14 @@ Ext.define('CustomApp', {
         });
         //END Hardcoded process definitions
         
-        this.down('#button_box').add({
+        var add_new_btn = this.down('#button_box').add({
         	xtype: 'rallybutton',
         	text: '+Add New',
         	cls: 'primary small',
-        	scope: this,
-        	handler: process_driver.addNew	
+//        	scope: this,
+//        	handler: process_driver.addNew	
         });
+        add_new_btn.on('click',process_driver.addNew, process_driver);
         
         this._loadAStoreWithAPromise(rally_type, process_driver.getFetchFields()).then({
             scope: this,

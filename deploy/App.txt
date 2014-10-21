@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Oct 21 2014 14:00:06 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Oct 21 2014 14:49:51 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Oct 21 2014 14:00:06 GMT-0700 (PDT)";
-        var CHECKSUM = 9854122798;
+        var APP_BUILD_DATE = "Tue Oct 21 2014 14:49:51 GMT-0700 (PDT)";
+        var CHECKSUM = 10732538172;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -161,8 +161,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
      * 
      */
     processDetail: {}, 
-    
-
+ 
     constructor: function(config){
         Ext.apply(this,config);
     },
@@ -181,15 +180,14 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
 				fields.push(pdd);
 			}, this);
 		}, this);
-    	this.logger.log('getProcessFields', fields);
     	return fields; 
     },
     /*
-     * getRelevantProcessFields: returns the fields that are triggered by for the current value of the process field
+     * getTriggeredProcessFields: returns the fields that are triggered by for the current value of the process field
      * 
      */
-    getRelevantProcessFields: function(value){
-    	
+    getTriggeredProcessFields: function(value){
+    	return this.processDetail[value];
     },
     
     validate: function(value, detail_field, detail_value){
@@ -309,7 +307,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	this.down('#detail-container').removeAll();
     	this.down('#message_box').update('');
 
-    	var detail_fields = this.processDefinition.processDetail[ctl.getValue().toString()];
+    	var detail_fields = this.processDefinition.getTriggeredProcessFields(ctl.getValue().toString());
     	this.record.set(this.processDefinition.rallyField,ctl.getValue());
     	
     	Ext.each(detail_fields, function(df){
@@ -504,14 +502,44 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     	
      return columns;        
     },
+    _getArtifactType: function(){
+   	 return this.processDefinitions[0].rallyType;
+    },
+    _getNewArtifactProcessDefinition: function(){
+      	 this.logger.log('_getNewArtifactProcessDefinition');
+//   	 Ext.each(this.processDefinitions, function(pd){
+//      		 if (pd.rallyField == null || 
+//      			 pd.rallyField.length == 0 || 
+//      			 pd.rallyField == undefined){
+//      			 return pd;
+//      		 }
+//      	 },this);
+      	 return {};  
+       },
+
     /*
      * addNew:  Adds a new artifact based on the process definition rules.  If there
      * is no process definition for add new, then it should launch the artifact add new window. 
      */
     addNew: function(){
-    	this.logger.log('addNew');
-    	alert('addNew');
-    },
+//    	this.logger.log('addNew');
+    	
+    	var new_pd = {};
+    	if (_.isEmpty({})){
+    		//kick off a new object.
+    		Rally.nav.Manager.create(this._getArtifactType());
+
+     	} else {
+       	   	dlg = Ext.create('Rally.technicalservices.dialog.Process', {
+      	   	     processDefinition: new_pd,
+      	   	     projectRef: this.projectRef
+         	 	});
+       	   	dlg.show();
+
+    	}
+    	
+     },
+ 
     /*
      * _initiateProcessDialog:  launches the process dialog for the selected process and record. 
      */
@@ -570,13 +598,14 @@ Ext.define('CustomApp', {
         });
         //END Hardcoded process definitions
         
-        this.down('#button_box').add({
+        var add_new_btn = this.down('#button_box').add({
         	xtype: 'rallybutton',
         	text: '+Add New',
         	cls: 'primary small',
-        	scope: this,
-        	handler: process_driver.addNew	
+//        	scope: this,
+//        	handler: process_driver.addNew	
         });
+        add_new_btn.on('click',process_driver.addNew, process_driver);
         
         this._loadAStoreWithAPromise(rally_type, process_driver.getFetchFields()).then({
             scope: this,
