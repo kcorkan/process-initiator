@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Oct 21 2014 11:05:07 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Oct 21 2014 12:30:13 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Oct 21 2014 11:05:07 GMT-0700 (PDT)";
-        var CHECKSUM = 6565251985;
+        var APP_BUILD_DATE = "Tue Oct 21 2014 12:30:13 GMT-0700 (PDT)";
+        var CHECKSUM = 8268062565;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -143,6 +143,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
         Ext.apply(this,config);
     },
     processName: 'The Blocked Process',
+    shortName: 'Block',
     processType: 'Required Fields',
     rallyType: 'Defect',
     rallyField: 'Blocked',
@@ -158,7 +159,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	}
     	console.log('req-fields',req_fields);
     	if (Ext.Array.contains(req_fields, detail_field)){
-    		if (detail_value.length > 0){
+    		if (detail_value && detail_value.length > 0){
     			return {valid: true};  
     		}
     	} else {
@@ -362,20 +363,42 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     }
 });
 Ext.define('Rally.technicalservices.ProcessDriver',{
-    processDefinitions: [],
+    logger: new Rally.technicalservices.Logger(),
     projectRef: '',
+
+/*
+ * processDefinitions:  Array of Rally.technicalservices.ProcessDefinition objects to define the process for this app
+ */
+	processDefinitions: [],
+/*
+ * static_fields:  These fields will always be fetched and displayed regardless of process definition
+ */
+    static_fields:  ['FormattedID','Name'],  
+    
 	constructor: function(config){
         Ext.apply(this,config);
     },
+/*
+ * getDisplayFields:  Returns an array of strings representing fields to display on the grid
+ * 
+ */
     getDisplayFields: function(){
-    	var display_fields = ['FormattedID','Name'];
+    	this.logger.log('getDisplayFields');
+    	var display_fields = this.static_fields;
     	Ext.each(this.processDefinitions, function(pd){
     		display_fields.push(pd.rallyField);
     	},this);
     	return display_fields;
     },
+/*
+ * getFetchFields:  Returns an array of strings representing fields to fetch from 
+ * the database.  This will include fields that should not be displayed but should
+ * be fetched because they are included in the process definition
+ * 
+ */
     getFetchFields: function(){
-    	var fetch_fields = ['FormattedID','Name'];
+    	this.logger.log('getFetchFields');
+    	var fetch_fields = this.static_fields;
     	Ext.each(this.processDefinitions, function(pd){
     		fetch_fields.push(pd.rallyField);
     			Ext.each(Object.keys(pd.processDetail), function(pdkey){
@@ -386,45 +409,81 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     	}, this);
     	return fetch_fields;
     },
+/*
+ * getColumnConfigurations: Returns an array of column objects to render in the grid.  
+ * 
+ */
     getColumnConfigurations: function(){
-    	var rally_field_col = {};
-    	if (this.processDefinitions[0].rallyField == 'Blocked'){
-    		rally_field_col = { 
-				 scope: this,
-				 xtype:'actioncolumn',
-				 text: this.processDefinitions[0].rallyField,
-				 items: [{
-				     icon: '/slm/images/blocked.gif',
-				     tooltip: 'Block',
-				     scope: this,
-				     value: true,
-				     handler: this._initiateProcess,
-				     dataIndex: this.processDefinitions[0].rallyField
-				 }]
-    		};
-   		}
+    	this.logger.log('getColumnConfigurations');
+    	var me = this;
     	
-     	var columns = [{ 
-             text: 'FormattedID',
-             dataIndex: 'FormattedID',
-         },{
-             text: 'Name',
-             dataIndex: 'Name',
-             flex: 1
-         }, 
-         rally_field_col];
+      	var columns = [{ 
+            text: 'FormattedID',
+            dataIndex: 'FormattedID',
+        },{
+            text: 'Name',
+            dataIndex: 'Name',
+            flex: 1
+        }]; 
+    	
+    	Ext.each(this.processDefinitions, function(pd){
+//    		var process_col = { 
+//				 scope: this,
+//				 xtype:'actioncolumn',
+//				 text: pd.rallyField,
+//				 items: [{
+//				     icon: '/slm/images/blocked.gif',
+//				     tooltip: 'Block',
+//				     scope: this,
+//				     value: true,
+//				     handler: this._initiateProcessDialog,
+//				     dataIndex: pd.rallyField
+//				 }]
+//    		};
+    		var process_col = {
+                width: 75,    
+                renderer: function (v, m, rec, row, col) {
+                    var id = Ext.id();
+                    Ext.defer(function () {
+                        Ext.widget('rallybutton', {
+                            renderTo: id,
+                            text: pd.shortName,
+                            scope: this,
+                            cls: 'secondary small',
+                            handler: function () {
+                                me._initiateProcessDialog(rec, row, pd, me);
+                            }
+                        });
+                    }, 50, this);
+                    return Ext.String.format('<div id="{0}"></div>', id);
+                    }
+                }
+    		columns.push(process_col);
+    	},this);
+    	
      return columns;        
     },
-    _initiateProcess: function(grid,rowIndex,colIndex){
-    	console.log('_initiateProcess',grid,rowIndex,colIndex);
-    	var rec = grid.getStore().getAt(rowIndex);
+    /*
+     * addNew:  Adds a new artifact based on the process definition rules.  If there
+     * is no process definition for add new, then it should launch the artifact add new window. 
+     */
+    addNew: function(){
+    	this.logger.log('addNew');
+    	alert('addNew');
+    },
+    /*
+     * _initiateProcessDialog:  launches the process dialog for the selected process and record. 
+     */
+    _initiateProcessDialog: function(rec,rowIndex,pd,me){
+    	me.logger.log('_initiateProcessDialog',rec,rowIndex,pd.shortName);
+
     	dlg = Ext.create('Rally.technicalservices.dialog.Process', {
-    	     processDefinition: this.processDefinitions[0],
-    	     projectRef: this.projectRef,
+    	     processDefinition: pd,
+    	     projectRef: me.projectRef,
     	     record: rec
     	 });
     	dlg.show();
-    },
+    }
 
 });
 
@@ -434,15 +493,15 @@ Ext.define('CustomApp', {
     logger: new Rally.technicalservices.Logger(),
     items: [
         {xtype:'container',itemId:'message_box',tpl:'Hello, <tpl>{_refObjectName}</tpl>'},
-        {xtype:'container',itemId:'display_box'},
+        {xtype:'container',itemId:'button_box', padding: 10},
+        {xtype:'container',itemId:'grid_box'},
         {xtype:'tsinfolink'}
     ],
     
     launch: function() {
       // Hardcoded process definitions  
     	var process_detail = {
-    			'true': ['Notes','Iteration','Owner'],
-    			'false':['Description']
+    			'true': ['Notes','Iteration','Release']
     	};
 
         var process_definition = Ext.create('Rally.technicalservices.ProcessDefinition',{
@@ -454,17 +513,23 @@ Ext.define('CustomApp', {
         });
         //END Hardcoded process definitions
         
+        this.down('#button_box').add({
+        	xtype: 'rallybutton',
+        	text: '+Add New',
+        	cls: 'primary small',
+        	scope: this,
+        	handler: process_driver.addNew	
+        });
+        
         this._loadAStoreWithAPromise(process_definition.rallyType, process_driver.getFetchFields()).then({
             scope: this,
             success: function(store){
-                this.down('#display_box').add({
+                this.down('#grid_box').add({
                     xtype: 'rallygrid',
                     store: store,
                     enableBlockedReasonPopover: false,
                     columnCfgs: process_driver.getColumnConfigurations()
                 });
-
-
             },
             failure: function(error_message){
                 alert(error_message);
