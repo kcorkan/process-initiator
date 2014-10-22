@@ -129,14 +129,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			break;
     		case 'DATE':
     			component['xtype'] = 'rallydatefield';
-//       			if (val){
-//        			component['listeners'] = {
-//               			    afterrender: function () {
-//               			        var df = Ext.getCmp('from');
-//               			        df.setValue(new Date(val));
-//               			    }
-//               			};
-//       			}
+
     			break;
     		case 'DECIMAL':
     		case 'INTEGER':

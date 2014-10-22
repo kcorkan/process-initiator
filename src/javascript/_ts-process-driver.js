@@ -54,6 +54,7 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
       	var columns = [{ 
             text: 'FormattedID',
             dataIndex: 'FormattedID',
+            width: 50,
         },{
             text: 'Name',
             dataIndex: 'Name',

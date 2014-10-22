@@ -18,8 +18,7 @@ Ext.define('CustomApp', {
             rallyType: rally_type,
             rallyField: 'Blocked',
         	processDetail: {
-    	//		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
-        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+        		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','Blocker Estimated Resolution Date','Release','Iteration','Project']
                 	}
         });
         var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
@@ -54,7 +53,11 @@ Ext.define('CustomApp', {
                     xtype: 'rallygrid',
                     store: store,
                     enableBlockedReasonPopover: false,
-                    columnCfgs: process_driver.getColumnConfigurations()
+                    columnCfgs: process_driver.getColumnConfigurations(),
+                    showRowActionsColumn: false,
+                    enableBulkEdit: false,
+                    enableRanking: false,
+                    enableEditing: false
                 });
             },
             failure: function(error_message){

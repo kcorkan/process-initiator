@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Wed Oct 22 2014 15:13:58 GMT-0700 (PDT) -->
+    <!--  Build Date: Wed Oct 22 2014 15:25:34 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Wed Oct 22 2014 15:13:58 GMT-0700 (PDT)";
-        var CHECKSUM = 16019944503;
+        var APP_BUILD_DATE = "Wed Oct 22 2014 15:25:34 GMT-0700 (PDT)";
+        var CHECKSUM = 15822952439;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -137,6 +137,7 @@ Ext.define('Rally.technicalservices.Logger',{
     }
 
 });
+
 
 Ext.override(Ext.grid.column.Action, {
 
@@ -441,14 +442,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			break;
     		case 'DATE':
     			component['xtype'] = 'rallydatefield';
-//       			if (val){
-//        			component['listeners'] = {
-//               			    afterrender: function () {
-//               			        var df = Ext.getCmp('from');
-//               			        df.setValue(new Date(val));
-//               			    }
-//               			};
-//       			}
+
     			break;
     		case 'DECIMAL':
     		case 'INTEGER':
@@ -604,6 +598,7 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
       	var columns = [{ 
             text: 'FormattedID',
             dataIndex: 'FormattedID',
+            width: 50,
         },{
             text: 'Name',
             dataIndex: 'Name',
@@ -700,8 +695,7 @@ Ext.define('CustomApp', {
             rallyType: rally_type,
             rallyField: 'Blocked',
         	processDetail: {
-    	//		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
-        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+        		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','Blocker Estimated Resolution Date','Release','Iteration','Project']
                 	}
         });
         var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
@@ -736,7 +730,11 @@ Ext.define('CustomApp', {
                     xtype: 'rallygrid',
                     store: store,
                     enableBlockedReasonPopover: false,
-                    columnCfgs: process_driver.getColumnConfigurations()
+                    columnCfgs: process_driver.getColumnConfigurations(),
+                    showRowActionsColumn: false,
+                    enableBulkEdit: false,
+                    enableRanking: false,
+                    enableEditing: false
                 });
             },
             failure: function(error_message){
