@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Wed Oct 22 2014 15:03:18 GMT-0700 (PDT) -->
+    <!--  Build Date: Wed Oct 22 2014 15:13:58 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Wed Oct 22 2014 15:03:18 GMT-0700 (PDT)";
-        var CHECKSUM = 15857156968;
+        var APP_BUILD_DATE = "Wed Oct 22 2014 15:13:58 GMT-0700 (PDT)";
+        var CHECKSUM = 16019944503;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -441,14 +441,14 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			break;
     		case 'DATE':
     			component['xtype'] = 'rallydatefield';
-       			if (val){
-        			component['listeners'] = {
-               			    afterrender: function () {
-               			        var df = Ext.getCmp('from');
-               			        df.setValue(new Date(val));
-               			    }
-               			};
-       			}
+//       			if (val){
+//        			component['listeners'] = {
+//               			    afterrender: function () {
+//               			        var df = Ext.getCmp('from');
+//               			        df.setValue(new Date(val));
+//               			    }
+//               			};
+//       			}
     			break;
     		case 'DECIMAL':
     		case 'INTEGER':
@@ -460,22 +460,29 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			console.log('schema',schema);
     			if (schema == 'Iteration') {
     				component['xtype'] = 'rallyiterationcombobox';
+    				component['allowNoEntry'] = true;
     				if (val && val._ref){
         				val = val._ref;
     				}
     			} else if (schema == 'Release') {
     				component['xtype'] = 'rallyreleasecombobox';
+    				component['allowNoEntry'] = true;
+
     				if (val && val._ref){
         				val = val._ref;
     				}
     			} else if (schema == 'User') {
     				component['xtype'] = 'rallyusersearchcombobox';
+    				component['allowNoEntry'] = true;
+
     				component['project'] = this.projectRef;
     				if (val && val._ref){
         				val = val._ref;
     				}
     			} else if (schema == 'Project') {
     				component['xtype'] = 'rallyprojectpicker';
+    				component['allowNoEntry'] = true;
+
     				val = this.projectRef;
     				
     			} else {
@@ -719,8 +726,6 @@ Ext.define('CustomApp', {
         	xtype: 'rallybutton',
         	text: '+Add New',
         	cls: 'primary small',
-//        	scope: this,
-//        	handler: process_driver.addNew	
         });
         add_new_btn.on('click',process_driver.addNew, process_driver);
         
