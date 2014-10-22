@@ -129,6 +129,14 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			break;
     		case 'DATE':
     			component['xtype'] = 'rallydatefield';
+       			if (val){
+        			component['listeners'] = {
+               			    afterrender: function () {
+               			        var df = Ext.getCmp('from');
+               			        df.setValue(new Date(val));
+               			    }
+               			};
+       			}
     			break;
     		case 'DECIMAL':
     		case 'INTEGER':
@@ -205,6 +213,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	var validated = true;
     	Ext.each(this.down('#detail-container').items.items, function(item){
     		console.log(item.itemId, item.value);
+    		item.validate
     		var validation_result = this.processDefinition.validate(item.itemId, item.value, val);
     		console.log(validation_result, validation_result.valid == false, item.itemId);
     		if (validation_result.valid == false){

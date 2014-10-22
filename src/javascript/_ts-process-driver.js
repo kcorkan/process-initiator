@@ -74,37 +74,7 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
 			            }]
 					}
 				}
-				
-				
-//				        width: 75,    
-//				        renderer: function (v, m, rec, row, col) {
-//				        	var id = Ext.id();
-//				            
-//				            Ext.create('Ext.Container', {
-//				                items: [{
-//				                	xtype: 'rallybutton', text: 'clickmdde', handler: function(){alert('hi');}
-//				                }],
-//				                renderTo: id
-//				            });
-//				            
-//				            
-//				            Ext.defer(function () {
-//				                Ext.widget('rallybutton', {
-//				                renderTo: id,
-//				                text: pd.shortName,
-//				                scope: this,
-//				                cls: 'secondary small',
-//				                handler: function () {
-//				                    me._initiateProcessDialog(rec, row, pd, me);
-//				                }
-//				            });
-//				        }, 50, this);
-//				        return Ext.String.format('<div id="{0}"></div>', id);
-//				        },
-//				        editor: {xtype: 'rallybutton', text: 'clickmdde', handler: function(){alert('hi');}}
-//				    }
 				columns.push(process_col);
-//    	 	}
     	},this);
      return columns;        
     },

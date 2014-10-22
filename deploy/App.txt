@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Wed Oct 22 2014 14:30:13 GMT-0700 (PDT) -->
+    <!--  Build Date: Wed Oct 22 2014 15:03:18 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Wed Oct 22 2014 14:30:13 GMT-0700 (PDT)";
-        var CHECKSUM = 16552802820;
+        var APP_BUILD_DATE = "Wed Oct 22 2014 15:03:18 GMT-0700 (PDT)";
+        var CHECKSUM = 15857156968;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -441,6 +441,14 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			break;
     		case 'DATE':
     			component['xtype'] = 'rallydatefield';
+       			if (val){
+        			component['listeners'] = {
+               			    afterrender: function () {
+               			        var df = Ext.getCmp('from');
+               			        df.setValue(new Date(val));
+               			    }
+               			};
+       			}
     			break;
     		case 'DECIMAL':
     		case 'INTEGER':
@@ -517,6 +525,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	var validated = true;
     	Ext.each(this.down('#detail-container').items.items, function(item){
     		console.log(item.itemId, item.value);
+    		item.validate
     		var validation_result = this.processDefinition.validate(item.itemId, item.value, val);
     		console.log(validation_result, validation_result.valid == false, item.itemId);
     		if (validation_result.valid == false){
@@ -608,37 +617,7 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
 			            }]
 					}
 				}
-				
-				
-//				        width: 75,    
-//				        renderer: function (v, m, rec, row, col) {
-//				        	var id = Ext.id();
-//				            
-//				            Ext.create('Ext.Container', {
-//				                items: [{
-//				                	xtype: 'rallybutton', text: 'clickmdde', handler: function(){alert('hi');}
-//				                }],
-//				                renderTo: id
-//				            });
-//				            
-//				            
-//				            Ext.defer(function () {
-//				                Ext.widget('rallybutton', {
-//				                renderTo: id,
-//				                text: pd.shortName,
-//				                scope: this,
-//				                cls: 'secondary small',
-//				                handler: function () {
-//				                    me._initiateProcessDialog(rec, row, pd, me);
-//				                }
-//				            });
-//				        }, 50, this);
-//				        return Ext.String.format('<div id="{0}"></div>', id);
-//				        },
-//				        editor: {xtype: 'rallybutton', text: 'clickmdde', handler: function(){alert('hi');}}
-//				    }
 				columns.push(process_col);
-//    	 	}
     	},this);
      return columns;        
     },
