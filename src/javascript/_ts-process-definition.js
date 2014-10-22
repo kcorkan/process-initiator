@@ -2,15 +2,37 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     logger: new Rally.technicalservices.Logger(),
     processName: '',
     shortName: '',
-    rallyType: null,  //Required
+    /*
+     * processType:  Type of process this is enforcing:
+     * 		-- new  : creation of a new artifact with rules
+     * 		-- edit : editing of an existing artifact with rules
+     */
+    processType: 'edit', //edit is default
+    rallyType: '',  //Required
     /*
      * rallyField:  The field that the processDetail rules belong to.  If this is null, then 
      * this process definition applies to new objects.  
      * 
      */
-    rallyField: null,
+    rallyField: '',
     /*
-     * processDetail: The rules for this process
+     * processDetail - current: The rules for this process
+     * 
+     *    EXAMPLE (edit):
+     *    {
+     *    	<triggerValue>: ['requiredfield1','requiredfield2',...] 
+     *    }
+     *    
+     *    EXAMPLE (new):
+     *    
+     *    {
+     *    	 required: ['requiredfield1','requiredfield2',...] 
+     *    }
+     * 
+     */
+    processDetail: {}, 
+    /*
+     * processDetail - wannabe: The rules for this process
      * 
      *    EXAMPLE:
      *    {
@@ -20,12 +42,13 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
      *    }
      * 
      */
-    processDetail: {}, 
  
     constructor: function(config){
         Ext.apply(this,config);
     },
-    
+    isNew: function(){
+    	return (this.processType == 'new');
+    },
     /*
      * getProcessFields: returns the fields that are defined in all the rules for the current process
      * 
@@ -42,6 +65,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
 		}, this);
     	return fields; 
     },
+    
     /*
      * getTriggeredProcessFields: returns the fields that are triggered by for the current value of the process field
      * 
@@ -50,16 +74,33 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	return this.processDetail[value];
     },
     
-    validate: function(value, detail_field, detail_value){
-    	this.logger.log('validate',value,detail_field,detail_value);
+    validate: function(detail_field, detail_value, trigger_value){
+    	this.logger.log('validate',trigger_value,detail_field,detail_value);
     	var req_fields = [];
     	
-    	if (Ext.Array.contains(Object.keys(this.processDetail), value.toString())){
-        	req_fields = this.processDetail[value.toString()];
-    	} else {
-    		req_fields = this.processDetail['ALL'];
+    	if (this.processType == 'new'){
+    		return this._validateNew();
     	}
+    	
+    	if (Ext.Array.contains(Object.keys(this.processDetail), trigger_value.toString())){
+        	req_fields = this.processDetail[trigger_value.toString()];
+    	} else {
+    		req_fields = this.processDetail.required;
+    	}
+    	console.log('processDefinition.validate',Ext.Array.contains(req_fields, detail_field), detail_field,detail_value);
+    	if (Ext.Array.contains(req_fields, detail_field)){
+    		if (detail_value && detail_value.toString().length > 0){
+    			return {valid: true};  
+    		}
+    	} else {
+			return {valid: true};  
+    	}
+    	var msg = Ext.String.format("A value for field {0} is required when {1} = {2}.", detail_field, this.rallyField, trigger_value);
+		return {valid: false, message: msg};  
 
+    },
+    _validateNew: function(detail_field, detail_value){
+    	var req_fields = this.processDetail.required;
     	if (Ext.Array.contains(req_fields, detail_field)){
     		if (detail_value && detail_value.length > 0){
     			return {valid: true};  
@@ -67,9 +108,8 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	} else {
 			return {valid: true};  
     	}
-    	var msg = Ext.String.format("A value for field {0} is required when {1} = {2}.", detail_field, this.rallyField, value);
+    	var msg = Ext.String.format("A value for field {0} is required for a new {1}.", detail_field, this.rallyType);
 		return {valid: false, message: msg};  
-
     }
     
 /*

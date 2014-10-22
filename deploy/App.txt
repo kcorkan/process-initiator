@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Oct 21 2014 14:49:51 GMT-0700 (PDT) -->
+    <!--  Build Date: Wed Oct 22 2014 14:30:13 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Oct 21 2014 14:49:51 GMT-0700 (PDT)";
-        var CHECKSUM = 10732538172;
+        var APP_BUILD_DATE = "Wed Oct 22 2014 14:30:13 GMT-0700 (PDT)";
+        var CHECKSUM = 16552802820;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -138,19 +138,80 @@ Ext.define('Rally.technicalservices.Logger',{
 
 });
 
+Ext.override(Ext.grid.column.Action, {
+
+	buttonText: 'clickme',
+    defaultRenderer: function(v, meta, record, rowIdx, colIdx, store, view){
+    	var me = this,
+            prefix = Ext.baseCSSPrefix,
+            scope = me.origScope || me,
+            items = me.items,
+            len = items.length,
+            i = 0,
+            item, ret, disabled, tooltip;
+ 
+        // Allow a configured renderer to create initial value (And set the other values in the "metadata" argument!)
+        // Assign a new variable here, since if we modify "v" it will also modify the arguments collection, meaning
+        // we will pass an incorrect value to getClass/getTip
+        ret = Ext.isFunction(me.origRenderer) ? me.origRenderer.apply(scope, arguments) || '' : '';
+
+        meta.tdCls += ' ' + Ext.baseCSSPrefix + 'action-col-cell';
+        for (; i < len; i++) {
+            item = items[i];
+
+            disabled = item.disabled || (item.isDisabled ? item.isDisabled.call(item.scope || scope, view, rowIdx, colIdx, item, record) : false);
+            tooltip = disabled ? null : (item.tooltip || (item.getTip ? item.getTip.apply(item.scope || scope, arguments) : null));
+
+            // Only process the item action setup once.
+            if (!item.hasActionConfiguration) {
+
+                // Apply our documented default to all items
+                item.stopSelection = me.stopSelection;
+                item.disable = Ext.Function.bind(me.disableAction, me, [i], 0);
+                item.enable = Ext.Function.bind(me.enableAction, me, [i], 0);
+                item.hasActionConfiguration = true;
+            }
+
+       ret += '<button class="' + me.buttonCls + ' ' + prefix + 'action-col-' + String(i) + '">' + me.buttonText + '</button>';     
+        }
+        return ret;    
+    },
+});
 Ext.define('Rally.technicalservices.ProcessDefinition',{
     logger: new Rally.technicalservices.Logger(),
     processName: '',
     shortName: '',
-    rallyType: null,  //Required
+    /*
+     * processType:  Type of process this is enforcing:
+     * 		-- new  : creation of a new artifact with rules
+     * 		-- edit : editing of an existing artifact with rules
+     */
+    processType: 'edit', //edit is default
+    rallyType: '',  //Required
     /*
      * rallyField:  The field that the processDetail rules belong to.  If this is null, then 
      * this process definition applies to new objects.  
      * 
      */
-    rallyField: null,
+    rallyField: '',
     /*
-     * processDetail: The rules for this process
+     * processDetail - current: The rules for this process
+     * 
+     *    EXAMPLE (edit):
+     *    {
+     *    	<triggerValue>: ['requiredfield1','requiredfield2',...] 
+     *    }
+     *    
+     *    EXAMPLE (new):
+     *    
+     *    {
+     *    	 required: ['requiredfield1','requiredfield2',...] 
+     *    }
+     * 
+     */
+    processDetail: {}, 
+    /*
+     * processDetail - wannabe: The rules for this process
      * 
      *    EXAMPLE:
      *    {
@@ -160,12 +221,13 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
      *    }
      * 
      */
-    processDetail: {}, 
  
     constructor: function(config){
         Ext.apply(this,config);
     },
-    
+    isNew: function(){
+    	return (this.processType == 'new');
+    },
     /*
      * getProcessFields: returns the fields that are defined in all the rules for the current process
      * 
@@ -182,6 +244,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
 		}, this);
     	return fields; 
     },
+    
     /*
      * getTriggeredProcessFields: returns the fields that are triggered by for the current value of the process field
      * 
@@ -190,16 +253,33 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	return this.processDetail[value];
     },
     
-    validate: function(value, detail_field, detail_value){
-    	this.logger.log('validate',value,detail_field,detail_value);
+    validate: function(detail_field, detail_value, trigger_value){
+    	this.logger.log('validate',trigger_value,detail_field,detail_value);
     	var req_fields = [];
     	
-    	if (Ext.Array.contains(Object.keys(this.processDetail), value.toString())){
-        	req_fields = this.processDetail[value.toString()];
-    	} else {
-    		req_fields = this.processDetail['ALL'];
+    	if (this.processType == 'new'){
+    		return this._validateNew();
     	}
+    	
+    	if (Ext.Array.contains(Object.keys(this.processDetail), trigger_value.toString())){
+        	req_fields = this.processDetail[trigger_value.toString()];
+    	} else {
+    		req_fields = this.processDetail.required;
+    	}
+    	console.log('processDefinition.validate',Ext.Array.contains(req_fields, detail_field), detail_field,detail_value);
+    	if (Ext.Array.contains(req_fields, detail_field)){
+    		if (detail_value && detail_value.toString().length > 0){
+    			return {valid: true};  
+    		}
+    	} else {
+			return {valid: true};  
+    	}
+    	var msg = Ext.String.format("A value for field {0} is required when {1} = {2}.", detail_field, this.rallyField, trigger_value);
+		return {valid: false, message: msg};  
 
+    },
+    _validateNew: function(detail_field, detail_value){
+    	var req_fields = this.processDetail.required;
     	if (Ext.Array.contains(req_fields, detail_field)){
     		if (detail_value && detail_value.length > 0){
     			return {valid: true};  
@@ -207,9 +287,8 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	} else {
 			return {valid: true};  
     	}
-    	var msg = Ext.String.format("A value for field {0} is required when {1} = {2}.", detail_field, this.rallyField, value);
+    	var msg = Ext.String.format("A value for field {0} is required for a new {1}.", detail_field, this.rallyType);
 		return {valid: false, message: msg};  
-
     }
     
 /*
@@ -242,14 +321,19 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     projectRef: null,
     
     constructor: function(config){
-        Ext.apply(this,config);
-        //Todo verify record and p-def are not null
+         Ext.apply(this,config);
+
+         
+         
    	     this.title = this.processDefinition.processName;
          this.items = this._buildItems(this.record, this.processDefinition);
          this.logger.log('ProcessDefinition dialog constructor', this.title, this.items);
+         
          this.callParent(arguments);
-         console.log(this.record.get(this.processDefinition.rallyField));
-         this.down('#' + this.processDefinition.rallyField).setValue(this.record.get(this.processDefinition.rallyField));
+
+         if (!this.processDefinition.isNew()){
+             this.down('#' + this.processDefinition.rallyField).setValue(this.record.get(this.processDefinition.rallyField));
+         }
     },
     _buildItems: function(rec, pdef){
   	     var items = [];
@@ -302,12 +386,12 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	}
     	return component;
     },
-    _processFieldChanged: function(ctl){
+    _processFieldChanged: function(ctl, val){
     	this.logger.log('_processFieldChanged',ctl, ctl.getValue());
     	this.down('#detail-container').removeAll();
     	this.down('#message_box').update('');
 
-    	var detail_fields = this.processDefinition.getTriggeredProcessFields(ctl.getValue().toString());
+    	var detail_fields = this.processDefinition.getTriggeredProcessFields(ctl.value.toString());
     	this.record.set(this.processDefinition.rallyField,ctl.getValue());
     	
     	Ext.each(detail_fields, function(df){
@@ -321,9 +405,16 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     _getFieldComponent: function(field, val){
     	this.logger.log('_getFieldComponent',field.name, val, field.attributeDefinition.AttributeType);
      
+    	var field_name = field.name;
+    	if (field.attributeDefinition.Custom){
+    		field_name = field_name.replace(/^c\_/,"");
+    	}
+    	
     	var component = {
-       		 itemId: field.name,
-       		 fieldLabel: field.displayName
+       		 itemId: field_name,
+       		 fieldLabel: field.displayName,
+       		 labelWidth: 150,
+       		 minWidth: 400
         };
 
     	//"BINARY_DATA", "BOOLEAN", "COLLECTION", "DATE", "DECIMAL", "INTEGER", "OBJECT", "QUANTITY", "RATING", "STATE", "STRING", "TEXT", "WEB_LINK", "RAW"
@@ -361,12 +452,24 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			console.log('schema',schema);
     			if (schema == 'Iteration') {
     				component['xtype'] = 'rallyiterationcombobox';
+    				if (val && val._ref){
+        				val = val._ref;
+    				}
     			} else if (schema == 'Release') {
     				component['xtype'] = 'rallyreleasecombobox';
+    				if (val && val._ref){
+        				val = val._ref;
+    				}
     			} else if (schema == 'User') {
     				component['xtype'] = 'rallyusersearchcombobox';
     				component['project'] = this.projectRef;
-    				val = val._ref;
+    				if (val && val._ref){
+        				val = val._ref;
+    				}
+    			} else if (schema == 'Project') {
+    				component['xtype'] = 'rallyprojectpicker';
+    				val = this.projectRef;
+    				
     			} else {
     				//This is a project or artifact link and shouldn't be changed.
     			}
@@ -387,7 +490,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
         //we need to do something with read only
          }
          this.logger.log('value', val);
-        if (val.length > 0){
+        if (val && val.length > 0){
         	component['value'] = val;
         }
         return component;
@@ -395,10 +498,26 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     },
     _save: function(){
     	//validate
+    	this.down('#message_box').update('');
+    	var validated = false;
+    	if (this.processDefinition.isNew()){
+    		validated = this._validateNew();
+    	} else {
+    		validated = this._validate()
+    	}
+    	
+    	if (validated) {
+        	this.record.save();
+        	this._cancel();
+    	}
+    },
+    _validate: function(){
+    	
     	var val = this.record.get(this.processDefinition.rallyField);
-    	validated = true;
+    	var validated = true;
     	Ext.each(this.down('#detail-container').items.items, function(item){
-    		var validation_result = this.processDefinition.validate(val , item.itemId, item.value);
+    		console.log(item.itemId, item.value);
+    		var validation_result = this.processDefinition.validate(item.itemId, item.value, val);
     		console.log(validation_result, validation_result.valid == false, item.itemId);
     		if (validation_result.valid == false){
     			validated = false;
@@ -407,11 +526,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
         		this.record.set(item.itemId, item.value);
     		}
     	},this);
-    	
-    	if (validated) {
-        	this.record.save();
-        	this._cancel();
-    	}
+    	return validated;
     },
      _cancel: function(){
     	this.destroy();
@@ -441,7 +556,9 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     	this.logger.log('getDisplayFields');
     	var display_fields = this.static_fields;
     	Ext.each(this.processDefinitions, function(pd){
-    		display_fields.push(pd.rallyField);
+    		if (!pd.isNew()){
+        		display_fields.push(pd.rallyField);
+    		}
     	},this);
     	return display_fields;
     },
@@ -476,30 +593,53 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
             dataIndex: 'Name',
             flex: 1
         }]; 
-    	
     	Ext.each(this.processDefinitions, function(pd){
-
-    		var process_col = {
-                width: 75,    
-                renderer: function (v, m, rec, row, col) {
-                    var id = Ext.id();
-                    Ext.defer(function () {
-                        Ext.widget('rallybutton', {
-                            renderTo: id,
-                            text: pd.shortName,
-                            scope: this,
-                            cls: 'secondary small',
-                            handler: function () {
-                                me._initiateProcessDialog(rec, row, pd, me);
-                            }
-                        });
-                    }, 50, this);
-                    return Ext.String.format('<div id="{0}"></div>', id);
-                    }
-                }
-    		columns.push(process_col);
+    		if (!pd.isNew()){
+				var process_col = {
+						xtype: 'actioncolumn',
+						buttonText: pd.shortName,
+						buttonCls: 'ts-secondary-button',
+						scope: this,
+						items: [{
+							scope: this,
+			                handler: function(grid, row, col) {
+			                	me._initiateProcessDialog(grid, row, pd);
+			                }
+			            }]
+					}
+				}
+				
+				
+//				        width: 75,    
+//				        renderer: function (v, m, rec, row, col) {
+//				        	var id = Ext.id();
+//				            
+//				            Ext.create('Ext.Container', {
+//				                items: [{
+//				                	xtype: 'rallybutton', text: 'clickmdde', handler: function(){alert('hi');}
+//				                }],
+//				                renderTo: id
+//				            });
+//				            
+//				            
+//				            Ext.defer(function () {
+//				                Ext.widget('rallybutton', {
+//				                renderTo: id,
+//				                text: pd.shortName,
+//				                scope: this,
+//				                cls: 'secondary small',
+//				                handler: function () {
+//				                    me._initiateProcessDialog(rec, row, pd, me);
+//				                }
+//				            });
+//				        }, 50, this);
+//				        return Ext.String.format('<div id="{0}"></div>', id);
+//				        },
+//				        editor: {xtype: 'rallybutton', text: 'clickmdde', handler: function(){alert('hi');}}
+//				    }
+				columns.push(process_col);
+//    	 	}
     	},this);
-    	
      return columns;        
     },
     _getArtifactType: function(){
@@ -507,13 +647,11 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     },
     _getNewArtifactProcessDefinition: function(){
       	 this.logger.log('_getNewArtifactProcessDefinition');
-//   	 Ext.each(this.processDefinitions, function(pd){
-//      		 if (pd.rallyField == null || 
-//      			 pd.rallyField.length == 0 || 
-//      			 pd.rallyField == undefined){
-//      			 return pd;
-//      		 }
-//      	 },this);
+	   	 Ext.each(this.processDefinitions, function(pd){
+	      		 if (pd.isNew()){
+	      			 return pd;
+	      		 }
+	      	 },this);
       	 return {};  
        },
 
@@ -543,12 +681,12 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     /*
      * _initiateProcessDialog:  launches the process dialog for the selected process and record. 
      */
-    _initiateProcessDialog: function(rec,rowIndex,pd,me){
-    	me.logger.log('_initiateProcessDialog',rec,rowIndex,pd.shortName);
-
+    _initiateProcessDialog: function(grid,rowIndex, pd){
+    	this.logger.log('_initiateProcessDialog',grid,rowIndex,pd.shortName);
+    	var rec = grid.getStore().getAt(rowIndex);
     	dlg = Ext.create('Rally.technicalservices.dialog.Process', {
     	     processDefinition: pd,
-    	     projectRef: me.projectRef,
+    	     projectRef: this.projectRef,
     	     record: rec
     	 });
     	dlg.show();
@@ -563,30 +701,30 @@ Ext.define('CustomApp', {
     items: [
         {xtype:'container',itemId:'message_box',tpl:'Hello, <tpl>{_refObjectName}</tpl>'},
         {xtype:'container',itemId:'button_box', padding: 10},
-        {xtype:'container',itemId:'grid_box'},
+        {xtype:'container',itemId:'grid_box', padding: 50},
         {xtype:'tsinfolink'}
     ],
     
     launch: function() {
       // Hardcoded process definitions  
-    	var rally_type = 'Defect';
+    	var rally_type = 'HierarchicalRequirement';
         var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
-            processName: 'The Blocked Process',
+            processName: '[Process] Block a User Story',
             shortName: 'Block',
             rallyType: rally_type,
             rallyField: 'Blocked',
         	processDetail: {
-    			'true': ['Notes','Iteration','Release']
-        	}
+    	//		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
+        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+                	}
         });
         var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
-            processName: 'Some other process',
-            shortName: 'Change State',
+            processName: '[Process] Create-a-User Story',
+            shortName: 'Add User Story',
+            processType: 'new',
             rallyType: rally_type,
-            rallyField: 'State',
         	processDetail: {
-    			'Fixed': ['FixedInBuild','VerifiedInBuild'],
-    			'Submitted': ['FoundInBuild']
+    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
         	}
         });
        
@@ -667,6 +805,20 @@ Ext.define('CustomApp', {
     margin-top: 25px;
     margin-right: 5px;
     cursor: pointer;
+}
+.ts-secondary-button {
+	color: #00A9E0;
+	font-family: NotoSans, Helvetica, Arial;
+	background-color: #FFFFFF;
+	border:1px solid #00A9E0;
+}
+.ts-secondary-button:hover {
+	color: #00A9E0;
+	font-family: NotoSans, Helvetica, Arial;
+	background-color: transparent;
+	cursor: pointer;
+	border:1px solid #00A9E0;
+
 }
     </style>
 

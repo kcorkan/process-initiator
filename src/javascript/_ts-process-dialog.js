@@ -9,14 +9,19 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     projectRef: null,
     
     constructor: function(config){
-        Ext.apply(this,config);
-        //Todo verify record and p-def are not null
+         Ext.apply(this,config);
+
+         
+         
    	     this.title = this.processDefinition.processName;
          this.items = this._buildItems(this.record, this.processDefinition);
          this.logger.log('ProcessDefinition dialog constructor', this.title, this.items);
+         
          this.callParent(arguments);
-         console.log(this.record.get(this.processDefinition.rallyField));
-         this.down('#' + this.processDefinition.rallyField).setValue(this.record.get(this.processDefinition.rallyField));
+
+         if (!this.processDefinition.isNew()){
+             this.down('#' + this.processDefinition.rallyField).setValue(this.record.get(this.processDefinition.rallyField));
+         }
     },
     _buildItems: function(rec, pdef){
   	     var items = [];
@@ -69,12 +74,12 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	}
     	return component;
     },
-    _processFieldChanged: function(ctl){
+    _processFieldChanged: function(ctl, val){
     	this.logger.log('_processFieldChanged',ctl, ctl.getValue());
     	this.down('#detail-container').removeAll();
     	this.down('#message_box').update('');
 
-    	var detail_fields = this.processDefinition.getTriggeredProcessFields(ctl.getValue().toString());
+    	var detail_fields = this.processDefinition.getTriggeredProcessFields(ctl.value.toString());
     	this.record.set(this.processDefinition.rallyField,ctl.getValue());
     	
     	Ext.each(detail_fields, function(df){
@@ -88,9 +93,16 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     _getFieldComponent: function(field, val){
     	this.logger.log('_getFieldComponent',field.name, val, field.attributeDefinition.AttributeType);
      
+    	var field_name = field.name;
+    	if (field.attributeDefinition.Custom){
+    		field_name = field_name.replace(/^c\_/,"");
+    	}
+    	
     	var component = {
-       		 itemId: field.name,
-       		 fieldLabel: field.displayName
+       		 itemId: field_name,
+       		 fieldLabel: field.displayName,
+       		 labelWidth: 150,
+       		 minWidth: 400
         };
 
     	//"BINARY_DATA", "BOOLEAN", "COLLECTION", "DATE", "DECIMAL", "INTEGER", "OBJECT", "QUANTITY", "RATING", "STATE", "STRING", "TEXT", "WEB_LINK", "RAW"
@@ -128,12 +140,24 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			console.log('schema',schema);
     			if (schema == 'Iteration') {
     				component['xtype'] = 'rallyiterationcombobox';
+    				if (val && val._ref){
+        				val = val._ref;
+    				}
     			} else if (schema == 'Release') {
     				component['xtype'] = 'rallyreleasecombobox';
+    				if (val && val._ref){
+        				val = val._ref;
+    				}
     			} else if (schema == 'User') {
     				component['xtype'] = 'rallyusersearchcombobox';
     				component['project'] = this.projectRef;
-    				val = val._ref;
+    				if (val && val._ref){
+        				val = val._ref;
+    				}
+    			} else if (schema == 'Project') {
+    				component['xtype'] = 'rallyprojectpicker';
+    				val = this.projectRef;
+    				
     			} else {
     				//This is a project or artifact link and shouldn't be changed.
     			}
@@ -154,7 +178,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
         //we need to do something with read only
          }
          this.logger.log('value', val);
-        if (val.length > 0){
+        if (val && val.length > 0){
         	component['value'] = val;
         }
         return component;
@@ -162,10 +186,26 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     },
     _save: function(){
     	//validate
+    	this.down('#message_box').update('');
+    	var validated = false;
+    	if (this.processDefinition.isNew()){
+    		validated = this._validateNew();
+    	} else {
+    		validated = this._validate()
+    	}
+    	
+    	if (validated) {
+        	this.record.save();
+        	this._cancel();
+    	}
+    },
+    _validate: function(){
+    	
     	var val = this.record.get(this.processDefinition.rallyField);
-    	validated = true;
+    	var validated = true;
     	Ext.each(this.down('#detail-container').items.items, function(item){
-    		var validation_result = this.processDefinition.validate(val , item.itemId, item.value);
+    		console.log(item.itemId, item.value);
+    		var validation_result = this.processDefinition.validate(item.itemId, item.value, val);
     		console.log(validation_result, validation_result.valid == false, item.itemId);
     		if (validation_result.valid == false){
     			validated = false;
@@ -174,11 +214,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
         		this.record.set(item.itemId, item.value);
     		}
     	},this);
-    	
-    	if (validated) {
-        	this.record.save();
-        	this._cancel();
-    	}
+    	return validated;
     },
      _cancel: function(){
     	this.destroy();

@@ -5,30 +5,30 @@ Ext.define('CustomApp', {
     items: [
         {xtype:'container',itemId:'message_box',tpl:'Hello, <tpl>{_refObjectName}</tpl>'},
         {xtype:'container',itemId:'button_box', padding: 10},
-        {xtype:'container',itemId:'grid_box'},
+        {xtype:'container',itemId:'grid_box', padding: 50},
         {xtype:'tsinfolink'}
     ],
     
     launch: function() {
       // Hardcoded process definitions  
-    	var rally_type = 'Defect';
+    	var rally_type = 'HierarchicalRequirement';
         var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
-            processName: 'The Blocked Process',
+            processName: '[Process] Block a User Story',
             shortName: 'Block',
             rallyType: rally_type,
             rallyField: 'Blocked',
         	processDetail: {
-    			'true': ['Notes','Iteration','Release']
-        	}
+    	//		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
+        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+                	}
         });
         var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
-            processName: 'Some other process',
-            shortName: 'Change State',
+            processName: '[Process] Create-a-User Story',
+            shortName: 'Add User Story',
+            processType: 'new',
             rallyType: rally_type,
-            rallyField: 'State',
         	processDetail: {
-    			'Fixed': ['FixedInBuild','VerifiedInBuild'],
-    			'Submitted': ['FoundInBuild']
+    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
         	}
         });
        

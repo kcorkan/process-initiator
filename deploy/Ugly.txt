@@ -3,10 +3,10 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2013 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Oct 21 2014 14:49:51 GMT-0700 (PDT) -->
+    <!--  Build Date: Wed Oct 22 2014 14:30:13 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Oct 21 2014 14:49:51 GMT-0700 (PDT)";
+        var APP_BUILD_DATE = "Wed Oct 22 2014 14:30:13 GMT-0700 (PDT)";
         var CHECKSUM = [%= checksum %];
     </script>
     
@@ -40,6 +40,20 @@
     margin-top: 25px;
     margin-right: 5px;
     cursor: pointer;
+}
+.ts-secondary-button {
+	color: #00A9E0;
+	font-family: NotoSans, Helvetica, Arial;
+	background-color: #FFFFFF;
+	border:1px solid #00A9E0;
+}
+.ts-secondary-button:hover {
+	color: #00A9E0;
+	font-family: NotoSans, Helvetica, Arial;
+	background-color: transparent;
+	cursor: pointer;
+	border:1px solid #00A9E0;
+
 }
     </style>
 

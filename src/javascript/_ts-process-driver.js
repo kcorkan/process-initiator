@@ -22,7 +22,9 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     	this.logger.log('getDisplayFields');
     	var display_fields = this.static_fields;
     	Ext.each(this.processDefinitions, function(pd){
-    		display_fields.push(pd.rallyField);
+    		if (!pd.isNew()){
+        		display_fields.push(pd.rallyField);
+    		}
     	},this);
     	return display_fields;
     },
@@ -57,30 +59,53 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
             dataIndex: 'Name',
             flex: 1
         }]; 
-    	
     	Ext.each(this.processDefinitions, function(pd){
-
-    		var process_col = {
-                width: 75,    
-                renderer: function (v, m, rec, row, col) {
-                    var id = Ext.id();
-                    Ext.defer(function () {
-                        Ext.widget('rallybutton', {
-                            renderTo: id,
-                            text: pd.shortName,
-                            scope: this,
-                            cls: 'secondary small',
-                            handler: function () {
-                                me._initiateProcessDialog(rec, row, pd, me);
-                            }
-                        });
-                    }, 50, this);
-                    return Ext.String.format('<div id="{0}"></div>', id);
-                    }
-                }
-    		columns.push(process_col);
+    		if (!pd.isNew()){
+				var process_col = {
+						xtype: 'actioncolumn',
+						buttonText: pd.shortName,
+						buttonCls: 'ts-secondary-button',
+						scope: this,
+						items: [{
+							scope: this,
+			                handler: function(grid, row, col) {
+			                	me._initiateProcessDialog(grid, row, pd);
+			                }
+			            }]
+					}
+				}
+				
+				
+//				        width: 75,    
+//				        renderer: function (v, m, rec, row, col) {
+//				        	var id = Ext.id();
+//				            
+//				            Ext.create('Ext.Container', {
+//				                items: [{
+//				                	xtype: 'rallybutton', text: 'clickmdde', handler: function(){alert('hi');}
+//				                }],
+//				                renderTo: id
+//				            });
+//				            
+//				            
+//				            Ext.defer(function () {
+//				                Ext.widget('rallybutton', {
+//				                renderTo: id,
+//				                text: pd.shortName,
+//				                scope: this,
+//				                cls: 'secondary small',
+//				                handler: function () {
+//				                    me._initiateProcessDialog(rec, row, pd, me);
+//				                }
+//				            });
+//				        }, 50, this);
+//				        return Ext.String.format('<div id="{0}"></div>', id);
+//				        },
+//				        editor: {xtype: 'rallybutton', text: 'clickmdde', handler: function(){alert('hi');}}
+//				    }
+				columns.push(process_col);
+//    	 	}
     	},this);
-    	
      return columns;        
     },
     _getArtifactType: function(){
@@ -88,13 +113,11 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     },
     _getNewArtifactProcessDefinition: function(){
       	 this.logger.log('_getNewArtifactProcessDefinition');
-//   	 Ext.each(this.processDefinitions, function(pd){
-//      		 if (pd.rallyField == null || 
-//      			 pd.rallyField.length == 0 || 
-//      			 pd.rallyField == undefined){
-//      			 return pd;
-//      		 }
-//      	 },this);
+	   	 Ext.each(this.processDefinitions, function(pd){
+	      		 if (pd.isNew()){
+	      			 return pd;
+	      		 }
+	      	 },this);
       	 return {};  
        },
 
@@ -124,12 +147,12 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     /*
      * _initiateProcessDialog:  launches the process dialog for the selected process and record. 
      */
-    _initiateProcessDialog: function(rec,rowIndex,pd,me){
-    	me.logger.log('_initiateProcessDialog',rec,rowIndex,pd.shortName);
-
+    _initiateProcessDialog: function(grid,rowIndex, pd){
+    	this.logger.log('_initiateProcessDialog',grid,rowIndex,pd.shortName);
+    	var rec = grid.getStore().getAt(rowIndex);
     	dlg = Ext.create('Rally.technicalservices.dialog.Process', {
     	     processDefinition: pd,
-    	     projectRef: me.projectRef,
+    	     projectRef: this.projectRef,
     	     record: rec
     	 });
     	dlg.show();
