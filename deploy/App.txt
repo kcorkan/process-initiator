@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Wed Oct 22 2014 16:16:28 GMT-0700 (PDT) -->
+    <!--  Build Date: Wed Oct 22 2014 16:33:08 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Wed Oct 22 2014 16:16:28 GMT-0700 (PDT)";
-        var CHECKSUM = 18813296595;
+        var APP_BUILD_DATE = "Wed Oct 22 2014 16:33:08 GMT-0700 (PDT)";
+        var CHECKSUM = 19903153594;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -457,13 +457,13 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     		case 'STRING':
     		case 'STATE':
     		case 'RATING':
-    			console.log(field.attributeDefinition.AllowedValues);
+    			console.log(field.attributeDefinition.AttributeType, field.attributeDefinition.AllowedValues);
     			if (field.attributeDefinition.AttributeType == 'RATING' || 
+    				field.attributeDefinition.AttributeType == 'STATE' ||
     					field.attributeDefinition.AllowedValues.length > 0){
     				component['xtype'] = 'rallyfieldvaluecombobox';
     				component['model'] = this.processDefinition.rallyType;
     				component['field'] = field.name;
-
     			} else {
     				component['xtype'] = 'textfield';
     			}
@@ -507,7 +507,11 @@ Ext.define('Rally.technicalservices.dialog.Process',{
 
     				val = this.projectRef;
     				
-    			} else {
+    			} else if (schema == 'State'){
+    				component['xtype'] = 'rallyfieldvaluecombobox';
+    				component['model'] = this.processDefinition.rallyType;
+    				component['field'] = field.name;
+    			}else {
     				//This is a project or artifact link and shouldn't be changed.
     			}
     			break;
@@ -554,7 +558,6 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	var validated = true;
     	Ext.each(this.down('#detail-container').items.items, function(item){
     		var validation_result = this.processDefinition.validate(item.itemId, item.value, val);
-    		console.log(validation_result, validation_result.valid == false, item.itemId);
     		if (validation_result.valid == false){
     			validated = false;
     			this.down('#message_box').update('<font color="red">' + validation_result.message + '</font>');
@@ -741,31 +744,43 @@ Ext.define('CustomApp', {
     
     launch: function() {
       // Hardcoded process definitions  
-    	var rally_type = 'User Story';
-        var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
-            processName: '[Process] Block a User Story',
-            shortName: 'Block',
-            rallyType: rally_type,
-            rallyField: 'Blocked',
-        	processDetail: {
-//        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
-    		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
-                	}
-        });
-        var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
-            processName: '[Process] Create-a-User Story',
-            shortName: 'Add User Story',
-            processType: 'new',
-            rallyType: rally_type,
-        	processDetail: {
-    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
-//    			required : ['Name','Project','Description','Iteration','Release','Owner']
-
-        	}
-        });
+//    	var rally_type = 'User Story';
+//        var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+//            processName: '[Process] Block a User Story',
+//            shortName: 'Block',
+//            rallyType: rally_type,
+//            rallyField: 'Blocked',
+//        	processDetail: {
+////        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+//    		'true': ['BlockedReason','BlockerCategory','BlockerOwnerFirstLast','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
+//                	}
+//        });
+//        var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+//            processName: '[Process] Create-a-User Story',
+//            shortName: 'Add User Story',
+//            processType: 'new',
+//            rallyType: rally_type,
+//        	processDetail: {
+//    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
+////    			required : ['Name','Project','Description','Iteration','Release','Owner']
+//
+//        	}
+//        });
  
+	    	var rally_type = 'PortfolioItem/Feature';
+	      var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+	          processName: '[Process] Create-a-Feature',
+	          shortName: 'Add New Feature',
+	          rallyType: rally_type,
+	          processType: 'new',
+	      	  processDetail: {
+	      		  required: ['Name','Project','Description','FeatureType','State','FeatureTargetMonth','Release','FeatureDeploymentType', 'CodeDeploymentSchedule','Owner']
+	              	}
+	      });
+
+    	
         var process_driver = Ext.create('Rally.technicalservices.ProcessDriver',{
-        	processDefinitions: [pd1,pd2],
+        	processDefinitions: [pd1],
         	projectRef: this.getContext().getProjectRef()
         });
         //END Hardcoded process definitions

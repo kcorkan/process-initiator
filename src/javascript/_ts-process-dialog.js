@@ -143,13 +143,13 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     		case 'STRING':
     		case 'STATE':
     		case 'RATING':
-    			console.log(field.attributeDefinition.AllowedValues);
+    			console.log(field.attributeDefinition.AttributeType, field.attributeDefinition.AllowedValues);
     			if (field.attributeDefinition.AttributeType == 'RATING' || 
+    				field.attributeDefinition.AttributeType == 'STATE' ||
     					field.attributeDefinition.AllowedValues.length > 0){
     				component['xtype'] = 'rallyfieldvaluecombobox';
     				component['model'] = this.processDefinition.rallyType;
     				component['field'] = field.name;
-
     			} else {
     				component['xtype'] = 'textfield';
     			}
@@ -193,7 +193,11 @@ Ext.define('Rally.technicalservices.dialog.Process',{
 
     				val = this.projectRef;
     				
-    			} else {
+    			} else if (schema == 'State'){
+    				component['xtype'] = 'rallyfieldvaluecombobox';
+    				component['model'] = this.processDefinition.rallyType;
+    				component['field'] = field.name;
+    			}else {
     				//This is a project or artifact link and shouldn't be changed.
     			}
     			break;
@@ -240,7 +244,6 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	var validated = true;
     	Ext.each(this.down('#detail-container').items.items, function(item){
     		var validation_result = this.processDefinition.validate(item.itemId, item.value, val);
-    		console.log(validation_result, validation_result.valid == false, item.itemId);
     		if (validation_result.valid == false){
     			validated = false;
     			this.down('#message_box').update('<font color="red">' + validation_result.message + '</font>');

@@ -11,31 +11,43 @@ Ext.define('CustomApp', {
     
     launch: function() {
       // Hardcoded process definitions  
-    	var rally_type = 'User Story';
-        var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
-            processName: '[Process] Block a User Story',
-            shortName: 'Block',
-            rallyType: rally_type,
-            rallyField: 'Blocked',
-        	processDetail: {
-//        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
-    		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
-                	}
-        });
-        var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
-            processName: '[Process] Create-a-User Story',
-            shortName: 'Add User Story',
-            processType: 'new',
-            rallyType: rally_type,
-        	processDetail: {
-    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
-//    			required : ['Name','Project','Description','Iteration','Release','Owner']
-
-        	}
-        });
+//    	var rally_type = 'User Story';
+//        var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+//            processName: '[Process] Block a User Story',
+//            shortName: 'Block',
+//            rallyType: rally_type,
+//            rallyField: 'Blocked',
+//        	processDetail: {
+////        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+//    		'true': ['BlockedReason','BlockerCategory','BlockerOwnerFirstLast','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
+//                	}
+//        });
+//        var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+//            processName: '[Process] Create-a-User Story',
+//            shortName: 'Add User Story',
+//            processType: 'new',
+//            rallyType: rally_type,
+//        	processDetail: {
+//    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
+////    			required : ['Name','Project','Description','Iteration','Release','Owner']
+//
+//        	}
+//        });
  
+	    	var rally_type = 'PortfolioItem/Feature';
+	      var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+	          processName: '[Process] Create-a-Feature',
+	          shortName: 'Add New Feature',
+	          rallyType: rally_type,
+	          processType: 'new',
+	      	  processDetail: {
+	      		  required: ['Name','Project','Description','FeatureType','State','FeatureTargetMonth','Release','FeatureDeploymentType', 'CodeDeploymentSchedule','Owner']
+	              	}
+	      });
+
+    	
         var process_driver = Ext.create('Rally.technicalservices.ProcessDriver',{
-        	processDefinitions: [pd1,pd2],
+        	processDefinitions: [pd1],
         	projectRef: this.getContext().getProjectRef()
         });
         //END Hardcoded process definitions
