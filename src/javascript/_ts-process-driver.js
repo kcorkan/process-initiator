@@ -84,23 +84,35 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     },
     _getNewArtifactProcessDefinition: function(){
       	 this.logger.log('_getNewArtifactProcessDefinition');
-	   	 Ext.each(this.processDefinitions, function(pd){
-	      		 if (pd.isNew()){
-	      			 return pd;
-	      		 }
-	      	 },this);
-      	 return {};  
+	   	 var newpd = {};
+      	 Ext.each(this.processDefinitions, function(pd){
+      		 if (pd.isNew()){
+      			 newpd = pd; 
+      		 }
+      	 },this);
+      	 return newpd;  
        },
+     getAddNewText: function(){
+    	 var pd = this._getNewArtifactProcessDefinition();
+    	 console.log(pd);
+    	 if (!_.isEmpty(pd)){
+    		 console.log(pd.shortName);
+    		 if( pd.shortName.length > 0){
+    			 return pd.shortName;
+    		 };
+    	 }
+    	 return '+Add New';
+     },
 
     /*
      * addNew:  Adds a new artifact based on the process definition rules.  If there
      * is no process definition for add new, then it should launch the artifact add new window. 
      */
     addNew: function(){
-//    	this.logger.log('addNew');
+     	this.logger.log('addNew');
     	
-    	var new_pd = {};
-    	if (_.isEmpty({})){
+    	var new_pd = this._getNewArtifactProcessDefinition();
+    	if (_.isEmpty(new_pd)){
     		//kick off a new object.
     		Rally.nav.Manager.create(this._getArtifactType());
 

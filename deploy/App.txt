@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Wed Oct 22 2014 15:25:34 GMT-0700 (PDT) -->
+    <!--  Build Date: Wed Oct 22 2014 16:15:54 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Wed Oct 22 2014 15:25:34 GMT-0700 (PDT)";
-        var CHECKSUM = 15822952439;
+        var APP_BUILD_DATE = "Wed Oct 22 2014 16:15:54 GMT-0700 (PDT)";
+        var CHECKSUM = 18813294967;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -258,8 +258,8 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	this.logger.log('validate',trigger_value,detail_field,detail_value);
     	var req_fields = [];
     	
-    	if (this.processType == 'new'){
-    		return this._validateNew();
+    	if (this.isNew()){
+    		return this._validateNew(detail_field,detail_value);
     	}
     	
     	if (Ext.Array.contains(Object.keys(this.processDetail), trigger_value.toString())){
@@ -267,7 +267,6 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	} else {
     		req_fields = this.processDetail.required;
     	}
-    	console.log('processDefinition.validate',Ext.Array.contains(req_fields, detail_field), detail_field,detail_value);
     	if (Ext.Array.contains(req_fields, detail_field)){
     		if (detail_value && detail_value.toString().length > 0){
     			return {valid: true};  
@@ -281,7 +280,9 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     },
     _validateNew: function(detail_field, detail_value){
     	var req_fields = this.processDetail.required;
+    	console.log(req_fields,this.processDetail.required, this.processDetail['required']);
     	if (Ext.Array.contains(req_fields, detail_field)){
+    		console.log('array contains ', detail_field, detail_value);
     		if (detail_value && detail_value.length > 0){
     			return {valid: true};  
     		}
@@ -323,23 +324,34 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     
     constructor: function(config){
          Ext.apply(this,config);
-
-         
-         
+	     
    	     this.title = this.processDefinition.processName;
          this.items = this._buildItems(this.record, this.processDefinition);
          this.logger.log('ProcessDefinition dialog constructor', this.title, this.items);
          
          this.callParent(arguments);
 
-         if (!this.processDefinition.isNew()){
+         if (this.processDefinition.isNew()){
+             Rally.data.ModelFactory.getModel({
+         	    type: this.processDefinition.rallyType,
+         	    scope: this,
+         	    success: function(model) {
+         	    	var record = Ext.create(model, {});
+         	    	this.record = record;
+         	    	this.logger.log('New record created. Building fields',this.processDefinition.getProcessFields());
+         	    	this._buildDetailFields(this.processDefinition.getProcessFields());
+         	    }
+         	});
+         } else {
              this.down('#' + this.processDefinition.rallyField).setValue(this.record.get(this.processDefinition.rallyField));
-         }
+         } 
     },
-    _buildItems: function(rec, pdef){
+    _buildItems: function(rec){
   	     var items = [];
   	     items.push({xtype:'container',itemId:'message_box'});
-  	     items.push(this._getProcessFieldComponent(rec));
+  	     if (!this.processDefinition.isNew()){
+  	  	     items.push(this._getProcessFieldComponent(rec));  	    	 
+  	     }
   	     items.push(this._getDetailFieldsComponentBox());
   	     items.push(this._getSaveButton());
   	     items.push(this._getCancelButton());
@@ -372,6 +384,9 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     _getProcessFieldComponent: function(rec){
     	this.logger.log('_getProcessFieldComponent', rec);
     	
+    	if (this.processDefinition.isNew()){
+    		return {};
+    	}
     	var field_value = rec.get(this.processDefinition.rallyField);
     	var field = rec.getField(this.processDefinition.rallyField)
     	
@@ -402,6 +417,19 @@ Ext.define('Rally.technicalservices.dialog.Process',{
         	var detail_component = this._getFieldComponent(field_obj, field_val);
     		this.down('#detail-container').add(detail_component);
     	}, this);
+    },
+    _buildDetailFields: function(detail_fields){
+    	this.down('#detail-container').removeAll();
+    	this.down('#message_box').update('');
+
+    	Ext.each(detail_fields, function(df){
+    		this.logger.log('_buildDetailFields => detail_field', df);
+        	var field_obj = this.record.getField(df);
+        	var field_val = this.record.get(df);
+        	var detail_component = this._getFieldComponent(field_obj, field_val);
+    		this.down('#detail-container').add(detail_component);
+    	}, this);
+    	
     },
     _getFieldComponent: function(field, val){
     	this.logger.log('_getFieldComponent',field.name, val, field.attributeDefinition.AttributeType);
@@ -525,8 +553,6 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	var val = this.record.get(this.processDefinition.rallyField);
     	var validated = true;
     	Ext.each(this.down('#detail-container').items.items, function(item){
-    		console.log(item.itemId, item.value);
-    		item.validate
     		var validation_result = this.processDefinition.validate(item.itemId, item.value, val);
     		console.log(validation_result, validation_result.valid == false, item.itemId);
     		if (validation_result.valid == false){
@@ -537,6 +563,21 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     		}
     	},this);
     	return validated;
+    },
+    _validateNew: function(){
+    	this.logger.log('_validateNew');
+    	var validated = true;
+    	Ext.each(this.down('#detail-container').items.items, function(item){
+    		var validation_result = this.processDefinition.validate(item.itemId, item.value);
+    		if (validation_result.valid == false){
+    			validated = false;
+    			this.down('#message_box').update('<font color="red">' + validation_result.message + '</font>');
+    		} else {
+        		this.record.set(item.itemId, item.value);
+    		}
+    	},this);
+    	return validated;
+    	
     },
      _cancel: function(){
     	this.destroy();
@@ -628,23 +669,35 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     },
     _getNewArtifactProcessDefinition: function(){
       	 this.logger.log('_getNewArtifactProcessDefinition');
-	   	 Ext.each(this.processDefinitions, function(pd){
-	      		 if (pd.isNew()){
-	      			 return pd;
-	      		 }
-	      	 },this);
-      	 return {};  
+	   	 var newpd = {};
+      	 Ext.each(this.processDefinitions, function(pd){
+      		 if (pd.isNew()){
+      			 newpd = pd; 
+      		 }
+      	 },this);
+      	 return newpd;  
        },
+     getAddNewText: function(){
+    	 var pd = this._getNewArtifactProcessDefinition();
+    	 console.log(pd);
+    	 if (!_.isEmpty(pd)){
+    		 console.log(pd.shortName);
+    		 if( pd.shortName.length > 0){
+    			 return pd.shortName;
+    		 };
+    	 }
+    	 return '+Add New';
+     },
 
     /*
      * addNew:  Adds a new artifact based on the process definition rules.  If there
      * is no process definition for add new, then it should launch the artifact add new window. 
      */
     addNew: function(){
-//    	this.logger.log('addNew');
+     	this.logger.log('addNew');
     	
-    	var new_pd = {};
-    	if (_.isEmpty({})){
+    	var new_pd = this._getNewArtifactProcessDefinition();
+    	if (_.isEmpty(new_pd)){
     		//kick off a new object.
     		Rally.nav.Manager.create(this._getArtifactType());
 
@@ -688,14 +741,15 @@ Ext.define('CustomApp', {
     
     launch: function() {
       // Hardcoded process definitions  
-    	var rally_type = 'HierarchicalRequirement';
+    	var rally_type = 'User Story';
         var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
             processName: '[Process] Block a User Story',
             shortName: 'Block',
             rallyType: rally_type,
             rallyField: 'Blocked',
         	processDetail: {
-        		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','Blocker Estimated Resolution Date','Release','Iteration','Project']
+        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+//    		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
                 	}
         });
         var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
@@ -704,12 +758,12 @@ Ext.define('CustomApp', {
             processType: 'new',
             rallyType: rally_type,
         	processDetail: {
-    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
+//    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
+    			required : ['Name','Project','Description','Iteration','Release','Owner']
+
         	}
         });
-       
-        
-        
+ 
         var process_driver = Ext.create('Rally.technicalservices.ProcessDriver',{
         	processDefinitions: [pd1,pd2],
         	projectRef: this.getContext().getProjectRef()
@@ -718,7 +772,7 @@ Ext.define('CustomApp', {
         
         var add_new_btn = this.down('#button_box').add({
         	xtype: 'rallybutton',
-        	text: '+Add New',
+        	text: process_driver.getAddNewText(),
         	cls: 'primary small',
         });
         add_new_btn.on('click',process_driver.addNew, process_driver);

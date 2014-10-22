@@ -11,14 +11,15 @@ Ext.define('CustomApp', {
     
     launch: function() {
       // Hardcoded process definitions  
-    	var rally_type = 'HierarchicalRequirement';
+    	var rally_type = 'User Story';
         var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
             processName: '[Process] Block a User Story',
             shortName: 'Block',
             rallyType: rally_type,
             rallyField: 'Blocked',
         	processDetail: {
-        		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','Blocker Estimated Resolution Date','Release','Iteration','Project']
+        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+//    		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
                 	}
         });
         var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
@@ -27,12 +28,12 @@ Ext.define('CustomApp', {
             processType: 'new',
             rallyType: rally_type,
         	processDetail: {
-    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
+//    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
+    			required : ['Name','Project','Description','Iteration','Release','Owner']
+
         	}
         });
-       
-        
-        
+ 
         var process_driver = Ext.create('Rally.technicalservices.ProcessDriver',{
         	processDefinitions: [pd1,pd2],
         	projectRef: this.getContext().getProjectRef()
@@ -41,7 +42,7 @@ Ext.define('CustomApp', {
         
         var add_new_btn = this.down('#button_box').add({
         	xtype: 'rallybutton',
-        	text: '+Add New',
+        	text: process_driver.getAddNewText(),
         	cls: 'primary small',
         });
         add_new_btn.on('click',process_driver.addNew, process_driver);

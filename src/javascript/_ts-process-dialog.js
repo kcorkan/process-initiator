@@ -10,23 +10,34 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     
     constructor: function(config){
          Ext.apply(this,config);
-
-         
-         
+	     
    	     this.title = this.processDefinition.processName;
          this.items = this._buildItems(this.record, this.processDefinition);
          this.logger.log('ProcessDefinition dialog constructor', this.title, this.items);
          
          this.callParent(arguments);
 
-         if (!this.processDefinition.isNew()){
+         if (this.processDefinition.isNew()){
+             Rally.data.ModelFactory.getModel({
+         	    type: this.processDefinition.rallyType,
+         	    scope: this,
+         	    success: function(model) {
+         	    	var record = Ext.create(model, {});
+         	    	this.record = record;
+         	    	this.logger.log('New record created. Building fields',this.processDefinition.getProcessFields());
+         	    	this._buildDetailFields(this.processDefinition.getProcessFields());
+         	    }
+         	});
+         } else {
              this.down('#' + this.processDefinition.rallyField).setValue(this.record.get(this.processDefinition.rallyField));
-         }
+         } 
     },
-    _buildItems: function(rec, pdef){
+    _buildItems: function(rec){
   	     var items = [];
   	     items.push({xtype:'container',itemId:'message_box'});
-  	     items.push(this._getProcessFieldComponent(rec));
+  	     if (!this.processDefinition.isNew()){
+  	  	     items.push(this._getProcessFieldComponent(rec));  	    	 
+  	     }
   	     items.push(this._getDetailFieldsComponentBox());
   	     items.push(this._getSaveButton());
   	     items.push(this._getCancelButton());
@@ -59,6 +70,9 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     _getProcessFieldComponent: function(rec){
     	this.logger.log('_getProcessFieldComponent', rec);
     	
+    	if (this.processDefinition.isNew()){
+    		return {};
+    	}
     	var field_value = rec.get(this.processDefinition.rallyField);
     	var field = rec.getField(this.processDefinition.rallyField)
     	
@@ -89,6 +103,19 @@ Ext.define('Rally.technicalservices.dialog.Process',{
         	var detail_component = this._getFieldComponent(field_obj, field_val);
     		this.down('#detail-container').add(detail_component);
     	}, this);
+    },
+    _buildDetailFields: function(detail_fields){
+    	this.down('#detail-container').removeAll();
+    	this.down('#message_box').update('');
+
+    	Ext.each(detail_fields, function(df){
+    		this.logger.log('_buildDetailFields => detail_field', df);
+        	var field_obj = this.record.getField(df);
+        	var field_val = this.record.get(df);
+        	var detail_component = this._getFieldComponent(field_obj, field_val);
+    		this.down('#detail-container').add(detail_component);
+    	}, this);
+    	
     },
     _getFieldComponent: function(field, val){
     	this.logger.log('_getFieldComponent',field.name, val, field.attributeDefinition.AttributeType);
@@ -212,8 +239,6 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	var val = this.record.get(this.processDefinition.rallyField);
     	var validated = true;
     	Ext.each(this.down('#detail-container').items.items, function(item){
-    		console.log(item.itemId, item.value);
-    		item.validate
     		var validation_result = this.processDefinition.validate(item.itemId, item.value, val);
     		console.log(validation_result, validation_result.valid == false, item.itemId);
     		if (validation_result.valid == false){
@@ -224,6 +249,21 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     		}
     	},this);
     	return validated;
+    },
+    _validateNew: function(){
+    	this.logger.log('_validateNew');
+    	var validated = true;
+    	Ext.each(this.down('#detail-container').items.items, function(item){
+    		var validation_result = this.processDefinition.validate(item.itemId, item.value);
+    		if (validation_result.valid == false){
+    			validated = false;
+    			this.down('#message_box').update('<font color="red">' + validation_result.message + '</font>');
+    		} else {
+        		this.record.set(item.itemId, item.value);
+    		}
+    	},this);
+    	return validated;
+    	
     },
      _cancel: function(){
     	this.destroy();

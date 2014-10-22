@@ -78,8 +78,8 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	this.logger.log('validate',trigger_value,detail_field,detail_value);
     	var req_fields = [];
     	
-    	if (this.processType == 'new'){
-    		return this._validateNew();
+    	if (this.isNew()){
+    		return this._validateNew(detail_field,detail_value);
     	}
     	
     	if (Ext.Array.contains(Object.keys(this.processDetail), trigger_value.toString())){
@@ -87,7 +87,6 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	} else {
     		req_fields = this.processDetail.required;
     	}
-    	console.log('processDefinition.validate',Ext.Array.contains(req_fields, detail_field), detail_field,detail_value);
     	if (Ext.Array.contains(req_fields, detail_field)){
     		if (detail_value && detail_value.toString().length > 0){
     			return {valid: true};  
@@ -101,7 +100,9 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     },
     _validateNew: function(detail_field, detail_value){
     	var req_fields = this.processDetail.required;
+    	console.log(req_fields,this.processDetail.required, this.processDetail['required']);
     	if (Ext.Array.contains(req_fields, detail_field)){
+    		console.log('array contains ', detail_field, detail_value);
     		if (detail_value && detail_value.length > 0){
     			return {valid: true};  
     		}
