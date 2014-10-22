@@ -44,8 +44,6 @@ Ext.define('CustomApp', {
         	xtype: 'rallybutton',
         	text: '+Add New',
         	cls: 'primary small',
-//        	scope: this,
-//        	handler: process_driver.addNew	
         });
         add_new_btn.on('click',process_driver.addNew, process_driver);
         

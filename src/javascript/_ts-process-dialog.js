@@ -129,14 +129,14 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			break;
     		case 'DATE':
     			component['xtype'] = 'rallydatefield';
-       			if (val){
-        			component['listeners'] = {
-               			    afterrender: function () {
-               			        var df = Ext.getCmp('from');
-               			        df.setValue(new Date(val));
-               			    }
-               			};
-       			}
+//       			if (val){
+//        			component['listeners'] = {
+//               			    afterrender: function () {
+//               			        var df = Ext.getCmp('from');
+//               			        df.setValue(new Date(val));
+//               			    }
+//               			};
+//       			}
     			break;
     		case 'DECIMAL':
     		case 'INTEGER':
@@ -148,22 +148,29 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			console.log('schema',schema);
     			if (schema == 'Iteration') {
     				component['xtype'] = 'rallyiterationcombobox';
+    				component['allowNoEntry'] = true;
     				if (val && val._ref){
         				val = val._ref;
     				}
     			} else if (schema == 'Release') {
     				component['xtype'] = 'rallyreleasecombobox';
+    				component['allowNoEntry'] = true;
+
     				if (val && val._ref){
         				val = val._ref;
     				}
     			} else if (schema == 'User') {
     				component['xtype'] = 'rallyusersearchcombobox';
+    				component['allowNoEntry'] = true;
+
     				component['project'] = this.projectRef;
     				if (val && val._ref){
         				val = val._ref;
     				}
     			} else if (schema == 'Project') {
     				component['xtype'] = 'rallyprojectpicker';
+    				component['allowNoEntry'] = true;
+
     				val = this.projectRef;
     				
     			} else {
