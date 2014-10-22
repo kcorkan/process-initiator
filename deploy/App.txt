@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Wed Oct 22 2014 16:15:54 GMT-0700 (PDT) -->
+    <!--  Build Date: Wed Oct 22 2014 16:16:28 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Wed Oct 22 2014 16:15:54 GMT-0700 (PDT)";
-        var CHECKSUM = 18813294967;
+        var APP_BUILD_DATE = "Wed Oct 22 2014 16:16:28 GMT-0700 (PDT)";
+        var CHECKSUM = 18813296595;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -748,8 +748,8 @@ Ext.define('CustomApp', {
             rallyType: rally_type,
             rallyField: 'Blocked',
         	processDetail: {
-        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
-//    		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
+//        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+    		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
                 	}
         });
         var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
@@ -758,8 +758,8 @@ Ext.define('CustomApp', {
             processType: 'new',
             rallyType: rally_type,
         	processDetail: {
-//    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
-    			required : ['Name','Project','Description','Iteration','Release','Owner']
+    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
+//    			required : ['Name','Project','Description','Iteration','Release','Owner']
 
         	}
         });

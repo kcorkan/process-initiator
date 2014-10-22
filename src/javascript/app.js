@@ -18,8 +18,8 @@ Ext.define('CustomApp', {
             rallyType: rally_type,
             rallyField: 'Blocked',
         	processDetail: {
-        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
-//    		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
+//        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+    		'true': ['BlockedReason','BlockerCategory','BlockerOwner','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
                 	}
         });
         var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
@@ -28,8 +28,8 @@ Ext.define('CustomApp', {
             processType: 'new',
             rallyType: rally_type,
         	processDetail: {
-//    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
-    			required : ['Name','Project','Description','Iteration','Release','Owner']
+    			required : ['Name','UserStoryType','Project','Description','Iteration','Release','Owner']
+//    			required : ['Name','Project','Description','Iteration','Release','Owner']
 
         	}
         });
