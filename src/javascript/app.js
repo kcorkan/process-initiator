@@ -11,17 +11,17 @@ Ext.define('CustomApp', {
     
     launch: function() {
       // Hardcoded process definitions  
-//    	var rally_type = 'User Story';
-//        var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
-//            processName: '[Process] Block a User Story',
-//            shortName: 'Block',
-//            rallyType: rally_type,
-//            rallyField: 'Blocked',
-//        	processDetail: {
-////        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
-//    		'true': ['BlockedReason','BlockerCategory','BlockerOwnerFirstLast','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
-//                	}
-//        });
+    	var rally_type = 'User Story';
+        var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+            processName: '[Process] Block a User Story',
+            shortName: 'Block',
+            rallyType: rally_type,
+            rallyField: 'Blocked',
+        	processDetail: {
+//        		'true': ['BlockedReason','BlockerCategory','BlockerCreationDate','Release','Iteration','Project']
+    		'true': ['BlockedReason','BlockerCategory','BlockerOwnerFirstLast','BlockerCreationDate','BlockerEstimatedResolutionDate','Release','Iteration','Project']
+                	}
+        });
 //        var pd2 = Ext.create('Rally.technicalservices.ProcessDefinition',{
 //            processName: '[Process] Create-a-User Story',
 //            shortName: 'Add User Story',
@@ -34,16 +34,17 @@ Ext.define('CustomApp', {
 //        	}
 //        });
  
-	    	var rally_type = 'PortfolioItem/Feature';
-	      var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
-	          processName: '[Process] Create-a-Feature',
-	          shortName: 'Add New Feature',
-	          rallyType: rally_type,
-	          processType: 'new',
-	      	  processDetail: {
-	      		  required: ['Name','Project','Description','FeatureType','State','FeatureTargetMonth','Release','FeatureDeploymentType', 'CodeDeploymentSchedule','Owner']
-	              	}
-	      });
+//	    	var rally_type = 'PortfolioItem/Feature';
+//	      var pd1 = Ext.create('Rally.technicalservices.ProcessDefinition',{
+//	          processName: '[Process] Create-a-Feature',
+//	          shortName: 'Add New Feature',
+//	          rallyType: rally_type,
+//	          processType: 'new',
+//	      	  processDetail: {
+////	      		  required: ['Name','Project','Description','FeatureType','State','FeatureTargetMonth','Release','FeatureDeploymentType', 'CodeDeploymentSchedule','Owner']
+//	      		  required: ['Name','Project','Description','State','Release','Owner']
+//	              	}
+//	      });
 
     	
         var process_driver = Ext.create('Rally.technicalservices.ProcessDriver',{

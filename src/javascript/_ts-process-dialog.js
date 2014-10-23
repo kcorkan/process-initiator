@@ -12,81 +12,81 @@ Ext.define('Rally.technicalservices.dialog.Process',{
          Ext.apply(this,config);
 	     
    	     this.title = this.processDefinition.processName;
-         this.items = this._buildItems(this.record, this.processDefinition);
+         this.items = this._initializeItems();
          this.logger.log('ProcessDefinition dialog constructor', this.title, this.items);
          
          this.callParent(arguments);
 
-         if (this.processDefinition.isNew()){
-             Rally.data.ModelFactory.getModel({
-         	    type: this.processDefinition.rallyType,
-         	    scope: this,
-         	    success: function(model) {
-         	    	var record = Ext.create(model, {});
-         	    	this.record = record;
-         	    	this.logger.log('New record created. Building fields',this.processDefinition.getProcessFields());
-         	    	this._buildDetailFields(this.processDefinition.getProcessFields());
+         Rally.data.ModelFactory.getModel({
+     	    type: this.processDefinition.rallyType,
+     	    scope: this,
+     	    success: function(model) {
+     	    	if (this.processDefinition.isNew()){
+         	    	this._createRecord(model);
+         	    } else {
+         	    	this._fetchRecord(model, this.record.get('ObjectID'));
          	    }
-         	});
-         } else {
-             this.down('#' + this.processDefinition.rallyField).setValue(this.record.get(this.processDefinition.rallyField));
-         } 
+     	    }
+     	});
     },
-    _buildItems: function(rec){
+    _fetchRecord: function(model, objectId){
+    	model.load(objectId, {
+    	    fetch: true,
+    	    scope: this,
+    	    callback: function(result, operation) {
+    	        if(operation.wasSuccessful()) {
+    	            this.record = result;
+    	            this._addProcessFieldComponent();
+    	            this.down('#' + this.processDefinition.rallyField).setValue(this.record.get(this.processDefinition.rallyField));
+    	            this._processFieldChanged(this.down('#' + this.processDefinition.rallyField));
+    	        }
+    	    }
+    	});
+    },
+    _createRecord: function(model){
+    	this.logger.log('_createRecord');
+    	var record = Ext.create(model, {});
+    	this.record = record;
+    	this._buildDetailFields(this.processDefinition.getProcessFields());
+    },
+    
+    _initializeItems: function(rec){
   	     var items = [];
   	     items.push({xtype:'container',itemId:'message_box'});
-  	     if (!this.processDefinition.isNew()){
-  	  	     items.push(this._getProcessFieldComponent(rec));  	    	 
-  	     }
-  	     items.push(this._getDetailFieldsComponentBox());
-  	     items.push(this._getSaveButton());
-  	     items.push(this._getCancelButton());
+  	     items.push({xtype:'container',itemId:'process-field-container'});
+  	     items.push({xtype:'container',itemId: 'detail-container'});
+  	     items.push({
+             xtype     : 'rallybutton',
+             text      : 'Save',
+             scope: this,
+             handler      : this._save
+     	});
+  	     items.push( {
+             xtype     : 'rallybutton',
+             text      : 'Cancel',
+             scope: this,
+             handler      : this._cancel
+         });
   	     return items;
     },
-    _getSaveButton: function(){
-    	return {
-            xtype     : 'rallybutton',
-            text      : 'Save',
-            scope: this,
-            handler      : this._save
-    	}
-    },
-    _getCancelButton: function(){
-    	return {
-            xtype     : 'rallybutton',
-            text      : 'Cancel',
-            scope: this,
-            handler      : this._cancel
-        }
-    },
 
-    _getDetailFieldsComponentBox: function(){
-		return {
-				xtype: 'container',
-				itemId: 'detail-container'
-		};
-
-    },
-    _getProcessFieldComponent: function(rec){
-    	this.logger.log('_getProcessFieldComponent', rec);
+    _addProcessFieldComponent: function(){
+    	this.logger.log('_getProcessFieldComponent');
     	
-    	if (this.processDefinition.isNew()){
-    		return {};
-    	}
-    	var field_value = rec.get(this.processDefinition.rallyField);
-    	var field = rec.getField(this.processDefinition.rallyField)
+    	var field_value = this.record.get(this.processDefinition.rallyField);
+    	var field = this.record.getField(this.processDefinition.rallyField)
     	
     	var component = this._getFieldComponent(field, field_value);
     	component['scope'] = this;
     	if (component.xtype == 'rallycheckboxfield'){
         	component['handler'] = this._processFieldChanged;
-    	} else { //Dropdown list
+    	} else { 
         	component['listeners'] = {
                 	scope: this,
                 	change: this._processFieldChanged
                 };
     	}
-    	return component;
+    	this.down('#process-field-container').add(component);	
     },
     _processFieldChanged: function(ctl, val){
     	this.logger.log('_processFieldChanged',ctl, ctl.getValue());
