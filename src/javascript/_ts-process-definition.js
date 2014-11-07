@@ -30,7 +30,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
      *    }
      * 
      */
-    processDetail: {}, 
+    processDetail: null, 
     /*
      * processDetail - wannabe: The rules for this process
      * 
@@ -43,8 +43,16 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
      * 
      */
  
-    constructor: function(config){
+    constructor: function(config, jsonObject){
         Ext.apply(this,config);
+        if (jsonObject){
+        	this. processName = jsonObject.processName;
+            this.shortName = jsonObject.shortName;
+            this.rallyType = jsonObject.rallyType;
+            this.rallyField = jsonObject.rallyField;
+            this.processType = jsonObject.processType;
+            this.processDetail = jsonObject.processDetail;
+        }
     },
     isNew: function(){
     	return (this.processType == 'new');
@@ -57,6 +65,9 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	var fields = [];
     	if (this.rallyField){
     		fields.push(this.rallyField);
+    	}
+    	if (this.processDetail == null) {
+    		this.processDetail = {};
     	}
     	Ext.each(Object.keys(this.processDetail), function(pdkey){
 			Ext.each(this.processDetail[pdkey], function(pdd){
@@ -71,12 +82,18 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
      * 
      */
     getTriggeredProcessFields: function(value){
+    	if (this.processDetail == null) {
+    		this.processDetail = {};
+    	}
     	return this.processDetail[value];
     },
     
     validate: function(detail_field, detail_value, trigger_value){
     	this.logger.log('validate',trigger_value,detail_field,detail_value);
     	var req_fields = [];
+    	if (this.processDetail == null) {
+    		this.processDetail = {};
+    	}
     	
     	if (this.isNew()){
     		return this._validateNew(detail_field,detail_value);
@@ -99,6 +116,9 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
 
     },
     _validateNew: function(detail_field, detail_value){
+    	if (this.processDetail == null) {
+    		this.processDetail = {};
+    	}
     	var req_fields = this.processDetail.required;
     	console.log(req_fields,this.processDetail.required, this.processDetail['required']);
     	if (Ext.Array.contains(req_fields, detail_field)){
@@ -111,7 +131,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     	}
     	var msg = Ext.String.format("A value for field {0} is required for a new {1}.", detail_field, this.rallyType);
 		return {valid: false, message: msg};  
-    }
+    },
     
 /*
  * This is just an example of validations in the model object.  
@@ -127,7 +147,18 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
  *               ]
  * 
  */ 
-    
+    statics: {
+        PROCESS_DEFINITION_PREFIX: 'rally.technicalservices.process-initiator.',
+        getProcessDefinitionPrefix: function(type){
+        	if (type && type.length > 0 ) {
+            	return Rally.technicalservices.ProcessDefinition.PROCESS_DEFINITION_PREFIX  + type.toLowerCase() + '.';
+       		
+        	} else {
+            	return Rally.technicalservices.ProcessDefinition.PROCESS_DEFINITION_PREFIX;
+        	}
+        }
+    }
+ 
 });
 
 

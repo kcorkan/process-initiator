@@ -22,7 +22,7 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     	this.logger.log('getDisplayFields');
     	var display_fields = this.static_fields;
     	Ext.each(this.processDefinitions, function(pd){
-    		if (!pd.isNew()){
+   	   	 if (pd.processType != 'new'){
         		display_fields.push(pd.rallyField);
     		}
     	},this);
@@ -61,7 +61,7 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
             flex: 1
         }]; 
     	Ext.each(this.processDefinitions, function(pd){
-    		if (!pd.isNew()){
+   	   	 if (pd.processType != 'new'){
 				var process_col = {
 						xtype: 'actioncolumn',
 						buttonText: pd.shortName,
@@ -85,8 +85,11 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     _getNewArtifactProcessDefinition: function(){
       	 this.logger.log('_getNewArtifactProcessDefinition');
 	   	 var newpd = {};
+
       	 Ext.each(this.processDefinitions, function(pd){
-      		 if (pd.isNew()){
+    	   	 console.log(pd);
+    	   	 if (pd.processType == 'new'){
+      		// if (pd && pd.isNew()){
       			 newpd = pd; 
       		 }
       	 },this);

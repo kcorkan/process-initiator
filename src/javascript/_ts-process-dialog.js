@@ -21,7 +21,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
      	    type: this.processDefinition.rallyType,
      	    scope: this,
      	    success: function(model) {
-     	    	if (this.processDefinition.isNew()){
+     	    	if (this.processDefinition.processType == 'new'){
          	    	this._createRecord(model);
          	    } else {
          	    	this._fetchRecord(model, this.record.get('ObjectID'));
@@ -71,7 +71,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     },
 
     _addProcessFieldComponent: function(){
-    	this.logger.log('_getProcessFieldComponent');
+    	this.logger.log('_getProcessFieldComponent', this.processDefinition);
     	
     	var field_value = this.record.get(this.processDefinition.rallyField);
     	var field = this.record.getField(this.processDefinition.rallyField)
@@ -93,16 +93,19 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	this.down('#detail-container').removeAll();
     	this.down('#message_box').update('');
 
-    	var detail_fields = this.processDefinition.getTriggeredProcessFields(ctl.value.toString());
-    	this.record.set(this.processDefinition.rallyField,ctl.getValue());
-    	
-    	Ext.each(detail_fields, function(df){
-    		this.logger.log('_processFieldChanged => detail_field', df);
-        	var field_obj = this.record.getField(df);
-        	var field_val = this.record.get(df);
-        	var detail_component = this._getFieldComponent(field_obj, field_val);
-    		this.down('#detail-container').add(detail_component);
-    	}, this);
+    	if (ctl.value){
+        	var detail_fields = this.processDefinition.getTriggeredProcessFields(ctl.value.toString());
+        	this.record.set(this.processDefinition.rallyField,ctl.getValue());
+        	
+        	Ext.each(detail_fields, function(df){
+        		this.logger.log('_processFieldChanged => detail_field', df);
+            	var field_obj = this.record.getField(df);
+            	var field_val = this.record.get(df);
+            	var detail_component = this._getFieldComponent(field_obj, field_val);
+        		this.down('#detail-container').add(detail_component);
+        	}, this);
+    		
+    	}
     },
     _buildDetailFields: function(detail_fields){
     	this.down('#detail-container').removeAll();
