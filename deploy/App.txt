@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Fri Nov 07 2014 12:42:52 GMT-0800 (PST) -->
+    <!--  Build Date: Fri Nov 07 2014 13:02:43 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Fri Nov 07 2014 12:42:52 GMT-0800 (PST)";
-        var CHECKSUM = 45234044589;
+        var APP_BUILD_DATE = "Fri Nov 07 2014 13:02:43 GMT-0800 (PST)";
+        var CHECKSUM = 43169608033;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -429,48 +429,6 @@ Ext.define('Rally.technicalservices.util.PreferenceSaving',{
    
 
 });
-Ext.define('Rally.technicalservices.dialog.ProcessConfiguration',{
-    extend: 'Rally.ui.dialog.Dialog',
-    logger: new Rally.technicalservices.Logger(),
-    autoShow: true,
-    draggable: true,
-    width: 400,
-    items: [
-            {xtype:'container',itemId:'display_box'},
-            {xtype:'container',itemId:'button_box',layout:{type:'hbox'}}
-            ],
-            
-    constructor: function(config){
-        Ext.apply(this,config);
-  	    this.title = 'Configure Process';
-        this.callParent(arguments);
-        
-    	this.down('#button_box').add({
-            xtype     : 'rallybutton',
-            text      : 'Save',
-            scope: this,
-            handler      : this._save
-    	});
-    	
-    	this.down('#button_box').add({
-            xtype     : 'rallybutton',
-            text      : 'Cancel',
-            scope: this,
-            handler      : this._cancel
-    	});
-    	
-    },
-    getConfiguration: function(type){
-    	return type;
-    },
-    _cancel: function(){
-    	this.destroy();
-    },
-    _save: function(){
-    	this.destroy();
-    },
-});
-
 Ext.define('Rally.technicalservices.ProcessDefinition',{
     logger: new Rally.technicalservices.Logger(),
     processName: '',
