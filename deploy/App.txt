@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Nov 10 2014 15:16:44 GMT-0800 (PST) -->
+    <!--  Build Date: Mon Nov 10 2014 15:19:32 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Nov 10 2014 15:16:44 GMT-0800 (PST)";
-        var CHECKSUM = 56141542149;
+        var APP_BUILD_DATE = "Mon Nov 10 2014 15:19:32 GMT-0800 (PST)";
+        var CHECKSUM = 53558955453;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -1025,52 +1025,6 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     }
 });
 
-Ext.define('Rally.technicalservices.utility.filter',{
-    logger: new Rally.technicalservices.Logger(),
-    allowedColumns: null,
-    availableColumns: null,
-    
-	constructor: function(config){
-        Ext.apply(this,config);
-    },
-
-    getFilterByCtl:function(id, handler){
-    	var ctl = {
-			xtype: 'rallycombobox',
-			store: this._getFilterByCtlStore,
-			itemId: id,
-			displayField: 'name',
-	    	valueField: 'name',
-	    	fieldLabel: 'Filter By:',
-	    	listeners: {
-	    		scope: this, 
-	    		change: handler
-	    	}
-    	};
-    	return ctl; 
-    },
-    getFilterCriteriaCtl: function(id, column, handler){
-    	
-    },
-    _getFilterableColumns: function(){
-    	return this.availableColumns;
-    },
-    _getFilterByCtlStore: function(){
-		var data = [];
-		var columns = this._getFilterableColumns();
-		
-		Ext.each(columns, function(col){
-            data.push({'name':col});
-		},this);
-		console.log('data',data);
-		
-		var fb_store = Ext.create('Rally.data.custom.Store', {
-	        data: data,
-	        autoLoad: true
-	    });
-		return fb_store; 
-    }
-});
 Ext.define('CustomApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
