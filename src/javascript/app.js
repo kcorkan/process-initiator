@@ -225,7 +225,7 @@ Ext.define('CustomApp', {
            * Filter Controls 
            */ 
           var columns = this.settings.displayColumns.toString().split(',');  
-          this.down('#filter_box').add({
+          var cb = this.down('#filter_box').add({
         	  xtype: 'rallycombobox',
         	  fieldLabel: 'Filter Results By',
         	  labelAlign: 'right',
@@ -241,6 +241,7 @@ Ext.define('CustomApp', {
         		  change: this.addFilterCriteriaBoxes
         	  }        	  
           });
+          cb.setValue('Name');
 
           /*
            * Grid
@@ -292,7 +293,7 @@ Ext.define('CustomApp', {
           if (this.down('#filter-button')){this.down('#filter-button').destroy();}
           if (this.down('#clear-filter-button')){this.down('#clear-filter-button').destroy();}
          
-    	  this.down('#filter_box').add({
+    	  var cbo = this.down('#filter_box').add({
         	  xtype: 'rallycombobox',
         	  itemId: 'filter-operator',
         	  displayField: 'name',
@@ -302,7 +303,7 @@ Ext.define('CustomApp', {
         	  padding: 5,
         	  store: this._getFilterOperatorStore(newValue)
           });
-    	 
+    	 cbo.setValue('=');
     	  
     	  var filter_value_ctl = this._getFilterValueControl(newValue);
           this.down('#filter_box').add(filter_value_ctl);         

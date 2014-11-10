@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Nov 10 2014 15:34:41 GMT-0800 (PST) -->
+    <!--  Build Date: Mon Nov 10 2014 15:50:02 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Nov 10 2014 15:34:41 GMT-0800 (PST)";
-        var CHECKSUM = 53610038582;
+        var APP_BUILD_DATE = "Mon Nov 10 2014 15:50:02 GMT-0800 (PST)";
+        var CHECKSUM = 53759608133;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -1252,7 +1252,7 @@ Ext.define('CustomApp', {
            * Filter Controls 
            */ 
           var columns = this.settings.displayColumns.toString().split(',');  
-          this.down('#filter_box').add({
+          var cb = this.down('#filter_box').add({
         	  xtype: 'rallycombobox',
         	  fieldLabel: 'Filter Results By',
         	  labelAlign: 'right',
@@ -1268,6 +1268,7 @@ Ext.define('CustomApp', {
         		  change: this.addFilterCriteriaBoxes
         	  }        	  
           });
+          cb.setValue('Name');
 
           /*
            * Grid
@@ -1319,7 +1320,7 @@ Ext.define('CustomApp', {
           if (this.down('#filter-button')){this.down('#filter-button').destroy();}
           if (this.down('#clear-filter-button')){this.down('#clear-filter-button').destroy();}
          
-    	  this.down('#filter_box').add({
+    	  var cbo = this.down('#filter_box').add({
         	  xtype: 'rallycombobox',
         	  itemId: 'filter-operator',
         	  displayField: 'name',
@@ -1329,7 +1330,7 @@ Ext.define('CustomApp', {
         	  padding: 5,
         	  store: this._getFilterOperatorStore(newValue)
           });
-    	 
+    	 cbo.setValue('=');
     	  
     	  var filter_value_ctl = this._getFilterValueControl(newValue);
           this.down('#filter_box').add(filter_value_ctl);         
