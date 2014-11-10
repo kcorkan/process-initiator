@@ -5,17 +5,16 @@ Ext.define('CustomApp', {
     items: [
         {xtype:'container',itemId:'settings_box'},
         {xtype:'container',itemId:'message_box',tpl:'Hello, <tpl>{_refObjectName}</tpl>'},
-        {xtype:'container',itemId:'button_box', padding: 10},
+        {xtype:'container',itemId:'button_box', layout: {type:'hbox'}, padding: 10},
+        {xtype:'container',itemId:'filter_box', layout: {type:'hbox'}, padding: 10},
         {xtype:'container',itemId:'grid_box', padding: 50},
         {xtype:'tsinfolink'}
     ],
-    
     launch: function() {
     	this._fetchProcessList().then({
     		scope: this,
     		success: function(){
     	        if (this.isExternal()){
-        			console.log('success');
     	            this.showSettings();
     	        } else {
     	            this.onSettingsUpdate(this.getSettings());  //(this.config.type,this.config.pageSize,this.config.fetch,this.config.columns);
@@ -29,32 +28,13 @@ Ext.define('CustomApp', {
     	}); 
     },
 
-    _loadAStoreWithAPromise: function(model_name, model_fields){
-        var deferred = Ext.create('Deft.Deferred');
-        
-        var defectStore = Ext.create('Rally.data.wsapi.Store', {
-            model: model_name,
-            fetch: model_fields,
-            autoLoad: true,
-            listeners: {
-                load: function(store, records, successful) {
-                    if (successful){
-                        deferred.resolve(store);
-                    } else {
-                        deferred.reject('Failed to load store for model [' + model_name + '] and fields [' + model_fields.join(',') + ']');
-                    }
-                }
-            }
-        });
-        return deferred.promise;
-    },
     _fetchProcessList: function(){
     	var deferred = Ext.create('Deft.Deferred');
     	Rally.technicalservices.util.PreferenceSaving.fetchFromJSON(Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(), 
     			this.getContext().getWorkspace()).then({
     				scope: this,
     				success: function(obj){
-    					console.log('_fetchProcessList', obj, obj[0].getKeys());
+    					
     	    			 this.processList = obj[0];
     					deferred.resolve();
     				},
@@ -86,7 +66,7 @@ Ext.define('CustomApp', {
    	   				
    	   			}
    	   		}]
-    	   	});
+    	});
 	   	dlg.show();    
 	   	
     },
@@ -183,15 +163,15 @@ Ext.define('CustomApp', {
             		process_def_keys.push(key);
             	}
             },this);
-        }
+         }
           
+        
           var process_defs = [];
           Ext.each(process_def_keys, function(pdk){
         	  var pd = Ext.create('Rally.technicalservices.ProcessDefinition',{}, this.processList.get(pdk));
         	  process_defs.push(pd);
           },this);
           
-          console.log(process_defs);
           if (process_defs.length == 0){
         	  this.down('#message_box').update('No processes have been defined for this app.  Please use the App Settings to define at least one process.');
         	  return;
@@ -203,31 +183,179 @@ Ext.define('CustomApp', {
           	projectRef: this.getContext().getProjectRef()
           });
           
+          /*
+           * Add New Button
+           */
           var add_new_btn = this.down('#button_box').add({
-          	xtype: 'rallybutton',
-          	text: process_driver.getAddNewText(),
-          	cls: 'primary small',
+            	xtype: 'rallybutton',
+            	text: process_driver.getAddNewText(),
+            	cls: 'primary small',
           });
           add_new_btn.on('click',process_driver.addNew, process_driver);
           
-          this._loadAStoreWithAPromise(settings.type, process_driver.getFetchFields()).then({
-              scope: this,
-              success: function(store){
-                  this.down('#grid_box').add({
-                      xtype: 'rallygrid',
-                      store: store,
-                      enableBlockedReasonPopover: false,
-                      columnCfgs: process_driver.getColumnConfigurations(),
-                      showRowActionsColumn: false,
-                      enableBulkEdit: false,
-                      enableRanking: false,
-                      enableEditing: false
-                  });
-              },
-              failure: function(error_message){
-                  alert(error_message);
-              }
+          /*
+           * Filter Controls 
+           */ 
+          var columns = ['Name','FormattedID','Project','Owner'];
+          this.down('#filter_box').add({
+        	  xtype: 'rallycombobox',
+        	  fieldLabel: 'Filter Results By',
+        	  labelAlign: 'right',
+        	  itemId: 'filter-property',
+        	  allowNoEntry: true,
+        	  noEntryText: '-- Select Column --',
+        	  store: this._getFilterPropertyStore(columns),
+        	  displayField: 'name',
+        	  valueField: 'name',
+        	  padding: 5,
+        	  listeners: {
+        		  scope: this,
+        		  change: this.addFilterCriteriaBoxes
+        	  }        	  
           });
+
+          /*
+           * Grid
+           */
+          var artifact_store =  Ext.create('Rally.data.wsapi.Store', {
+              model: settings.type,
+              fetch: process_driver.getFetchFields(),
+              autoLoad: true,
+              pageSize: 500,
+          });
+          
+    	  this.down('#grid_box').add({
+              xtype: 'rallygrid',
+              store: artifact_store,
+              itemId: 'data-grid',
+              enableBlockedReasonPopover: false,
+              columnCfgs: process_driver.getColumnConfigurations(),
+              showRowActionsColumn: false,
+              enableBulkEdit: false,
+              enableRanking: false,
+              enableEditing: false,
+              showPagingToolbar: true,
+              pagingToolbarCfg: {
+            	  pageSizes: [20, 50, 200, 500]
+              } 
+    	  });
+      },
+      /*
+       * Filter Functions
+       * 
+       */
+      _filterGrid: function(){
+    	 var prop = this.down('#filter-property').getValue();
+    	 var op = this.down('#filter-operator').getValue(); 
+    	 var val = this.down('#filter-value').getValue(); 
+    	 var f = Ext.create('Rally.data.wsapi.Filter',{
+    		    property: prop,
+    		    operator: op,
+    		    value   : val
+    		});
+    	  this.down('#data-grid').filter(f,true,true);
       },
 
+      addFilterCriteriaBoxes: function(cb, newValue){
+    	  this.logger.log('addFilterCriteriaBoxes', newValue);
+          if (this.down('#filter-operator')){this.down('#filter-operator').destroy();}
+          if (this.down('#filter-value')){this.down('#filter-value').destroy();}
+          if (this.down('#filter-button')){this.down('#filter-button').destroy();}
+          if (this.down('#clear-filter-button')){this.down('#clear-filter-button').destroy();}
+         
+    	  this.down('#filter_box').add({
+        	  xtype: 'rallycombobox',
+        	  itemId: 'filter-operator',
+        	  displayField: 'name',
+        	  valueField: 'name',
+        	  allowNoEntry: true,
+        	  noEntryText: '-- Select Operator --',
+        	  padding: 5,
+        	  store: this._getFilterOperatorStore(newValue)
+          });
+    	 
+    	  
+    	  var filter_value_ctl = this._getFilterValueControl(newValue);
+          this.down('#filter_box').add(filter_value_ctl);         
+          
+          this.down('#filter_box').add({
+        	  xtype: 'rallybutton',
+        	  itemId: 'filter-button',
+        	  scope: this, 
+        	  text: 'Filter',
+        	  margin: 5,
+        	  handler: this._filterGrid
+          });
+          
+          this.down('#filter_box').add({
+        	  xtype: 'rallybutton',
+        	  itemId: 'clear-filter-button',
+        	  scope: this, 
+        	  text: 'Clear',
+        	  margin: 5,
+        	  handler: this._clearGridFilter
+          });
+
+      },
+      _getFilterValueControl: function(newVal){
+    	  var ctl = {
+        	  xtype: 'rallytextfield',
+        	  padding: 5,
+        	  itemId: 'filter-value'
+          };
+    	  
+    	  if (newVal && (newVal.toLowerCase() == 'project')){
+    		  ctl = {
+    				  xtype: 'rallyprojectpicker',
+    				  itemId: 'filter-value',
+    	        	  padding: 5
+    		  };
+    	  }
+    	  if (newVal && (newVal.toLowerCase() == 'owner' || newVal.toLowerCase() == 'submittedby')){
+    		  ctl = {
+    			xtype: 'rallyusersearchcombobox',
+    			project: this.getContext().getProject(),
+				itemId: 'filter-value',
+				padding: 5
+    		  };
+    	  }
+    	  return ctl; 
+      },
+      _clearGridFilter: function(){
+    	  this.down('#data-grid').getStore().clearFilter();
+    	  this.down('#filter-property').setValue(null);
+    	  this.down('#filter-operator').setValue(null);
+    	  this.down('#filter-value').setValue('');
+
+      },
+      _getFilterPropertyStore: function(columns){
+		  	this.logger.log('_getFilterPropertyStore');
+		
+		  	var data = [];
+			Ext.each(columns, function(col){
+		        data.push( {'name': col} );
+			},this);
+			
+			var fb_store = Ext.create('Rally.data.custom.Store', {
+		        data: data,
+		        autoLoad: true
+		    });
+			return fb_store; 
+      },
+
+      _getFilterOperatorStore: function(newVal){
+		  	this.logger.log('_getFilterOperatorStore');
+
+		  	var data = [ {'name':'='}, {'name':'contains'}];
+		  	if (newVal && (newVal.toLowerCase() == 'owner' || newVal.toLowerCase() == 'submittedby' ||
+		  			newVal.toLowerCase() == 'project')){
+		  		data = [ {'name':'='}];
+		  	}
+		  	
+			var fb_store = Ext.create('Rally.data.custom.Store', {
+		        data: data,
+		        autoLoad: true
+		    });
+			return fb_store; 
+      }
 });
