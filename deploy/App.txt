@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Nov 10 2014 15:30:44 GMT-0800 (PST) -->
+    <!--  Build Date: Mon Nov 10 2014 15:32:10 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Nov 10 2014 15:30:44 GMT-0800 (PST)";
-        var CHECKSUM = 53728955547;
+        var APP_BUILD_DATE = "Mon Nov 10 2014 15:32:10 GMT-0800 (PST)";
+        var CHECKSUM = 53610036278;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -1251,7 +1251,6 @@ Ext.define('CustomApp', {
           /*
            * Filter Controls 
            */ 
-          alert(this.settings.displayColumns);
           var columns = this.settings.displayColumns.toString().split(',');  
           this.down('#filter_box').add({
         	  xtype: 'rallycombobox',

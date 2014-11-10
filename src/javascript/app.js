@@ -224,7 +224,6 @@ Ext.define('CustomApp', {
           /*
            * Filter Controls 
            */ 
-          alert(this.settings.displayColumns);
           var columns = this.settings.displayColumns.toString().split(',');  
           this.down('#filter_box').add({
         	  xtype: 'rallycombobox',
