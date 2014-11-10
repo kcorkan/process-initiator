@@ -13,7 +13,7 @@ Ext.define('CustomApp', {
     config: {
         defaultSettings: {
             type: 'Defect',
-            displayColumns: ['Name','FormattedID']
+            displayColumns: 'Name,FormattedID'
         }
     },
     displayFieldBlacklist: ['Changesets','Description','Notes','RevisionHistory','Tags','Attachments',
@@ -224,7 +224,8 @@ Ext.define('CustomApp', {
           /*
            * Filter Controls 
            */ 
-          var columns = this.settings.displayColumns;  
+          alert(this.settings.displayColumns);
+          var columns = this.settings.displayColumns.toString().split(',');  
           this.down('#filter_box').add({
         	  xtype: 'rallycombobox',
         	  fieldLabel: 'Filter Results By',
