@@ -47,7 +47,7 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
  * getColumnConfigurations: Returns an array of column objects to render in the grid.  
  * 
  */
-    getColumnConfigurations: function(){
+    getColumnConfigurations: function(displayColumns){
     	this.logger.log('getColumnConfigurations');
     	var me = this;
     	
@@ -60,6 +60,15 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
             dataIndex: 'Name',
             flex: 1
         }]; 
+      	
+      	Ext.each(displayColumns, function(dc){
+      		console.log(dc.toLowerCase());
+      		if (dc.toLowerCase() != 'name' && dc.toLowerCase() != 'formattedid'){
+      			columns.push({text: dc, dataIndex: dc});
+      		}
+      	},this);
+      	
+      	
     	Ext.each(this.processDefinitions, function(pd){
    	   	 if (!pd.isNew()){
 				var process_col = {
@@ -126,11 +135,8 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
       	   	     y: 0
          	 	});
        	   	dlg.show();
-
     	}
-    	
      },
- 
     /*
      * _initiateProcessDialog:  launches the process dialog for the selected process and record. 
      */
@@ -145,5 +151,4 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
     	 });
     	dlg.show();
     }
-
 });

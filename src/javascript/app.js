@@ -10,6 +10,14 @@ Ext.define('CustomApp', {
         {xtype:'container',itemId:'grid_box', padding: 50},
         {xtype:'tsinfolink'}
     ],
+    config: {
+        defaultSettings: {
+            type: 'Defect',
+            displayColumns: ['Name','FormattedID']
+        }
+    },
+    displayFieldBlacklist: ['Changesets','Description','Notes','RevisionHistory','Tags','Attachments',
+                            'Tasks','Discussion','DragAndDropRank','LatestDiscussionAgeInMinutes'],
     launch: function() {
     	this._fetchProcessList().then({
     		scope: this,
@@ -96,11 +104,13 @@ Ext.define('CustomApp', {
                     fieldLabel: 'Rally Type:',
                     valueField:'TypePath',
             		labelWidth: 100,
+            		value: 'Defect',
                     listeners: {
                     	change: function(cb, newValue){
                     		console.log('change',newValue);
                     	}
                     },
+                    bubbleEvents: ['change', 'ready'],
                     readyEvent: 'ready'
 //                },{
 //	                name: 'processes',
@@ -112,8 +122,27 @@ Ext.define('CustomApp', {
 //	                	fetch: ['Name'],
 //	                	filters: filters,
 //	                	pageSize: 20
-//	                }
-            }];
+//	                 }
+        		},{
+        			name: 'displayColumns',
+        			xtype: 'rallyfieldpicker',
+        			fieldLabel: 'Display Columns:',
+        			modelTypes: ['Defect'],
+        			labelWidth: 100,
+        			autoExpand: false,
+        			alwaysExpanded: false,
+        			fieldBlackList: this.displayFieldBlacklist, 
+        			handlesEvents: {
+        				change: function(cb, newVal){
+        					this.modelTypes = [newVal];
+        					this.refreshWithNewContext(this.context);
+        				},
+        				ready: function(cb){
+        					this.modelTypes = [cb.getValue()];
+        					this.refreshWithNewContext(this.context);
+        				}
+        			}
+        		}];
     },
     isExternal: function(){
         return typeof(this.getAppId()) == 'undefined';
@@ -164,7 +193,6 @@ Ext.define('CustomApp', {
             	}
             },this);
          }
-          
         
           var process_defs = [];
           Ext.each(process_def_keys, function(pdk){
@@ -196,7 +224,7 @@ Ext.define('CustomApp', {
           /*
            * Filter Controls 
            */ 
-          var columns = ['Name','FormattedID','Project','Owner'];
+          var columns = this.settings.displayColumns;  
           this.down('#filter_box').add({
         	  xtype: 'rallycombobox',
         	  fieldLabel: 'Filter Results By',
@@ -217,6 +245,7 @@ Ext.define('CustomApp', {
           /*
            * Grid
            */
+          var fetch_fields = Ext.Array.merge(process_driver.getFetchFields(), columns);
           var artifact_store =  Ext.create('Rally.data.wsapi.Store', {
               model: settings.type,
               fetch: process_driver.getFetchFields(),
@@ -229,7 +258,7 @@ Ext.define('CustomApp', {
               store: artifact_store,
               itemId: 'data-grid',
               enableBlockedReasonPopover: false,
-              columnCfgs: process_driver.getColumnConfigurations(),
+              columnCfgs: process_driver.getColumnConfigurations(columns),
               showRowActionsColumn: false,
               enableBulkEdit: false,
               enableRanking: false,
@@ -303,7 +332,6 @@ Ext.define('CustomApp', {
         	  padding: 5,
         	  itemId: 'filter-value'
           };
-    	  
     	  if (newVal && (newVal.toLowerCase() == 'project')){
     		  ctl = {
     				  xtype: 'rallyprojectpicker',
