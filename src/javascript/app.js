@@ -247,28 +247,50 @@ Ext.define('CustomApp', {
            * Grid
            */
           var fetch_fields = Ext.Array.merge(process_driver.getFetchFields(), columns);
-          var artifact_store =  Ext.create('Rally.data.wsapi.Store', {
+          var store_configs = {
               model: settings.type,
               fetch: process_driver.getFetchFields(),
               autoLoad: true,
               pageSize: 500,
-          });
+          };
           
-    	  this.down('#grid_box').add({
-              xtype: 'rallygrid',
-              store: artifact_store,
-              itemId: 'data-grid',
-              enableBlockedReasonPopover: false,
-              columnCfgs: process_driver.getColumnConfigurations(columns),
-              showRowActionsColumn: false,
-              enableBulkEdit: false,
-              enableRanking: false,
-              enableEditing: false,
-              showPagingToolbar: true,
-              pagingToolbarCfg: {
-            	  pageSizes: [20, 50, 200, 500]
-              } 
-    	  });
+          if (settings.type.toLowerCase() == 'hierarchicalrequirement'){
+        	  store_configs['groupField'] = 'Feature';
+        	  store_configs['groupDir'] = 'ASC';
+              store_configs['getGroupString'] = function(record) {
+                  var feature = record.get('Feature');
+                  return (feature && feature._refObjectName) || 'No Feature';
+              }
+              if (!Ext.Array.contains(store_configs['fetch'],'Feature')){
+            	  store_configs['fetch'].push('Feature');
+              }
+          } 
+          var artifact_store =  Ext.create('Rally.data.wsapi.Store', store_configs);	  
+          
+          var grid_configs = {
+                  xtype: 'rallygrid',
+                  store: artifact_store,
+                  itemId: 'data-grid',
+                  enableBlockedReasonPopover: false,
+                  columnCfgs: process_driver.getColumnConfigurations(columns),
+                  showRowActionsColumn: false,
+                  enableBulkEdit: false,
+                  enableRanking: false,
+                  enableEditing: false,
+                  showPagingToolbar: true,
+                  pagingToolbarCfg: {
+                	  pageSizes: [20, 50, 200, 500]
+                  }
+          };
+          
+          if (settings.type.toLowerCase() == 'hierarchicalrequirement'){
+        	  grid_configs['features'] =  [{
+                  ftype: 'groupingsummary',
+                  groupHeaderTpl: '{name} ({rows.length})'
+              }];
+          }
+    	  this.down('#grid_box').add(grid_configs);
+
       },
       /*
        * Filter Functions
