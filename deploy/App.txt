@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Nov 10 2014 17:19:25 GMT-0800 (PST) -->
+    <!--  Build Date: Mon Nov 10 2014 17:39:12 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Nov 10 2014 17:19:25 GMT-0800 (PST)";
-        var CHECKSUM = 55630830369;
+        var APP_BUILD_DATE = "Mon Nov 10 2014 17:39:12 GMT-0800 (PST)";
+        var CHECKSUM = 56620863019;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -1317,7 +1317,6 @@ Ext.define('CustomApp', {
               }];
           }
     	  this.down('#grid_box').add(grid_configs);
-
       },
       /*
        * Filter Functions
@@ -1377,11 +1376,28 @@ Ext.define('CustomApp', {
 
       },
       _getFilterValueControl: function(newVal){
+    	  
+    	  //var field = 
+    	  
     	  var ctl = {
         	  xtype: 'rallytextfield',
         	  padding: 5,
         	  itemId: 'filter-value'
           };
+    	  if (newVal && (newVal.toLowerCase() == 'iteration')){
+    		  ctl = {
+    				  xtype: 'rallyiterationcombobox',
+    				  itemId: 'filter-value',
+    	        	  padding: 5
+    		  };
+    	  }
+    	  if (newVal && (newVal.toLowerCase() == 'release')){
+    		  ctl = {
+    				  xtype: 'rallyreleasecombobox',
+    				  itemId: 'filter-value',
+    	        	  padding: 5
+    		  };
+    	  }
     	  if (newVal && (newVal.toLowerCase() == 'project')){
     		  ctl = {
     				  xtype: 'rallyprojectpicker',
@@ -1426,7 +1442,8 @@ Ext.define('CustomApp', {
 
 		  	var data = [ {'name':'='}, {'name':'contains'}];
 		  	if (newVal && (newVal.toLowerCase() == 'owner' || newVal.toLowerCase() == 'submittedby' ||
-		  			newVal.toLowerCase() == 'project')){
+		  			newVal.toLowerCase() == 'project' || newVal.toLowerCase() == 'iteration' || 
+		  			newVal.toLowerCase() == 'release')){
 		  		data = [ {'name':'='}];
 		  	}
 		  	

@@ -290,7 +290,6 @@ Ext.define('CustomApp', {
               }];
           }
     	  this.down('#grid_box').add(grid_configs);
-
       },
       /*
        * Filter Functions
@@ -350,11 +349,28 @@ Ext.define('CustomApp', {
 
       },
       _getFilterValueControl: function(newVal){
+    	  
+    	  //var field = 
+    	  
     	  var ctl = {
         	  xtype: 'rallytextfield',
         	  padding: 5,
         	  itemId: 'filter-value'
           };
+    	  if (newVal && (newVal.toLowerCase() == 'iteration')){
+    		  ctl = {
+    				  xtype: 'rallyiterationcombobox',
+    				  itemId: 'filter-value',
+    	        	  padding: 5
+    		  };
+    	  }
+    	  if (newVal && (newVal.toLowerCase() == 'release')){
+    		  ctl = {
+    				  xtype: 'rallyreleasecombobox',
+    				  itemId: 'filter-value',
+    	        	  padding: 5
+    		  };
+    	  }
     	  if (newVal && (newVal.toLowerCase() == 'project')){
     		  ctl = {
     				  xtype: 'rallyprojectpicker',
@@ -399,7 +415,8 @@ Ext.define('CustomApp', {
 
 		  	var data = [ {'name':'='}, {'name':'contains'}];
 		  	if (newVal && (newVal.toLowerCase() == 'owner' || newVal.toLowerCase() == 'submittedby' ||
-		  			newVal.toLowerCase() == 'project')){
+		  			newVal.toLowerCase() == 'project' || newVal.toLowerCase() == 'iteration' || 
+		  			newVal.toLowerCase() == 'release')){
 		  		data = [ {'name':'='}];
 		  	}
 		  	
