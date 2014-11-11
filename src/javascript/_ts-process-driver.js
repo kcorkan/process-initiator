@@ -62,7 +62,6 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
         }]; 
       	
       	Ext.each(displayColumns, function(dc){
-      		console.log(dc.toLowerCase());
       		if (dc.toLowerCase() != 'name' && dc.toLowerCase() != 'formattedid'){
       			columns.push({text: dc, dataIndex: dc});
       		}
@@ -96,7 +95,6 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
 	   	 var newpd = {};
 
       	 Ext.each(this.processDefinitions, function(pd){
-    	   	 console.log(pd);
     	   
       		 if (pd && pd.isNew()){
       			 newpd = pd; 
@@ -106,9 +104,7 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
        },
      getAddNewText: function(){
     	 var pd = this._getNewArtifactProcessDefinition();
-    	 console.log(pd);
     	 if (!_.isEmpty(pd)){
-    		 console.log(pd.shortName);
     		 if( pd.shortName.length > 0){
     			 return pd.shortName;
     		 };

@@ -42,8 +42,7 @@ Ext.define('CustomApp', {
     			this.getContext().getWorkspace()).then({
     				scope: this,
     				success: function(obj){
-    					
-    	    			 this.processList = obj[0];
+    	    			this.processList = obj[0];
     					deferred.resolve();
     				},
     				failure: function(){
@@ -58,6 +57,7 @@ Ext.define('CustomApp', {
     	Ext.each(this.processList.getKeys(), function(key){
     		data.push({'key': key, 'name':this.processList.get(key).processName});
     	},this);
+    	
     	return Ext.create('Rally.data.custom.Store',{
     		data: data
     	});
@@ -224,6 +224,7 @@ Ext.define('CustomApp', {
           /*
            * Filter Controls 
            */ 
+         
           var columns = this.settings.displayColumns.toString().split(',');  
           var cb = this.down('#filter_box').add({
         	  xtype: 'rallycombobox',

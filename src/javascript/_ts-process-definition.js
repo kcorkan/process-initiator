@@ -46,7 +46,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     constructor: function(config, jsonObject){
         Ext.apply(this,config);
         if (jsonObject){
-        	this. processName = jsonObject.processName;
+        	this.processName = jsonObject.processName;
             this.shortName = jsonObject.shortName;
             this.rallyType = jsonObject.rallyType;
             this.rallyField = jsonObject.rallyField;
@@ -120,9 +120,7 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
     		this.processDetail = {};
     	}
     	var req_fields = this.processDetail.required;
-    	console.log(req_fields,this.processDetail.required, this.processDetail['required']);
     	if (Ext.Array.contains(req_fields, detail_field)){
-    		console.log('array contains ', detail_field, detail_value);
     		if (detail_value && detail_value.length > 0){
     			return {valid: true};  
     		}

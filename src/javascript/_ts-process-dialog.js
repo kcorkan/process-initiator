@@ -22,7 +22,8 @@ Ext.define('Rally.technicalservices.dialog.Process',{
      	    scope: this,
      	    success: function(model) {
      	    	if (this.processDefinition.processType == 'new'){
-         	    	this._createRecord(model);
+         	    	
+     	    		this._createRecord(model);
          	    } else {
          	    	this._fetchRecord(model, this.record.get('ObjectID'));
          	    }
@@ -69,24 +70,26 @@ Ext.define('Rally.technicalservices.dialog.Process',{
          });
   	     return items;
     },
-
+    
     _addProcessFieldComponent: function(){
     	this.logger.log('_getProcessFieldComponent', this.processDefinition);
     	
     	var field_value = this.record.get(this.processDefinition.rallyField);
     	var field = this.record.getField(this.processDefinition.rallyField)
     	
-    	var component = this._getFieldComponent(field, field_value);
-    	component['scope'] = this;
-    	if (component.xtype == 'rallycheckboxfield'){
-        	component['handler'] = this._processFieldChanged;
-    	} else { 
-        	component['listeners'] = {
-                	scope: this,
-                	change: this._processFieldChanged
-                };
+    	if (field) {
+        	var component = this._getFieldComponent(field, field_value);
+        	component['scope'] = this;
+        	if (component.xtype == 'rallycheckboxfield'){
+            	component['handler'] = this._processFieldChanged;
+        	} else { 
+            	component['listeners'] = {
+                    	scope: this,
+                    	change: this._processFieldChanged
+                    };
+        	}
+        	this.down('#process-field-container').add(component);	
     	}
-    	this.down('#process-field-container').add(component);	
     },
     _processFieldChanged: function(ctl, val){
     	this.logger.log('_processFieldChanged',ctl, ctl.getValue());
@@ -101,8 +104,10 @@ Ext.define('Rally.technicalservices.dialog.Process',{
         		this.logger.log('_processFieldChanged => detail_field', df);
             	var field_obj = this.record.getField(df);
             	var field_val = this.record.get(df);
-            	var detail_component = this._getFieldComponent(field_obj, field_val);
-        		this.down('#detail-container').add(detail_component);
+            	if (field_obj){
+                	var detail_component = this._getFieldComponent(field_obj, field_val);
+            		this.down('#detail-container').add(detail_component);
+            	}
         	}, this);
     		
     	}
@@ -115,8 +120,10 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     		this.logger.log('_buildDetailFields => detail_field', df);
         	var field_obj = this.record.getField(df);
         	var field_val = this.record.get(df);
-        	var detail_component = this._getFieldComponent(field_obj, field_val);
-    		this.down('#detail-container').add(detail_component);
+        	if (field_obj) {
+            	var detail_component = this._getFieldComponent(field_obj, field_val);
+        		this.down('#detail-container').add(detail_component);
+        	}
     	}, this);
     	
     },
@@ -146,7 +153,6 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     		case 'STRING':
     		case 'STATE':
     		case 'RATING':
-    			console.log(field.attributeDefinition.AttributeType, field.attributeDefinition.AllowedValues);
     			if (field.attributeDefinition.AttributeType == 'RATING' || 
     				field.attributeDefinition.AttributeType == 'STATE' ||
     					field.attributeDefinition.AllowedValues.length > 0){
@@ -168,7 +174,6 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     		case 'OBJECT':
     			//Release, Iteration, User, Project, artifact links
     			var schema = field.attributeDefinition.SchemaType;
-    			console.log('schema',schema);
     			if (schema == 'Iteration') {
     				component['xtype'] = 'rallyiterationcombobox';
     				component['allowNoEntry'] = true;
