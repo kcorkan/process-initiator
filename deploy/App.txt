@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Nov 11 2014 12:52:00 GMT-0800 (PST) -->
+    <!--  Build Date: Tue Nov 11 2014 15:37:05 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Nov 11 2014 12:52:00 GMT-0800 (PST)";
-        var CHECKSUM = 58207893396;
+        var APP_BUILD_DATE = "Tue Nov 11 2014 15:37:05 GMT-0800 (PST)";
+        var CHECKSUM = 63463620698;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -586,15 +586,15 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
         	}
         },
         getProcessDefinitionType: function(key){
-        	var process_parts = key.split('.');
-        	if (process_parts.length > 3){
-        		return process_parts[3].toLowerCase();
+        	if (key){
+            	var process_parts = key.split('.');
+            	if (process_parts.length > 3){
+            		return process_parts[3].toLowerCase();
+            	}
         	}
         	return '';
         }
-    
     }
- 
 });
 
 
@@ -1052,6 +1052,7 @@ Ext.define('CustomApp', {
             displayColumns: 'Name,FormattedID'
         }
     },
+    
     displayFieldBlacklist: ['Changesets','Description','Notes','RevisionHistory','Tags','Attachments',
                             'Tasks','Discussion','DragAndDropRank','LatestDiscussionAgeInMinutes'],
     launch: function() {
@@ -1133,10 +1134,17 @@ Ext.define('CustomApp', {
             		labelWidth: 100,
             		width: 400,
                     bubbleEvents: ['change', 'ready'],
-                    readyEvent: 'ready'
+                    readyEvent: 'ready',
+                    listeners: {
+                    	//scope: this,
+                    	change: function(cb, newValue){
+                    		console.log ('_appSettings.items',me._appSettings.items);
+                    	}
+                    }
                 },{
  	                name: 'processes',
 	                xtype: 'combobox',
+	                itemId: 'process-settings',
 	                labelWidth: 100,
 	                fieldLabel: 'Processes:',
 	                multiSelect: true,
@@ -1273,25 +1281,16 @@ Ext.define('CustomApp', {
           /*
            * Filter Controls 
            */ 
-         
-          var columns = this.settings.displayColumns.toString().split(',');  
-          var cb = this.down('#filter_box').add({
-        	  xtype: 'rallycombobox',
-        	  fieldLabel: 'Filter Results By',
-        	  labelAlign: 'right',
-        	  itemId: 'filter-property',
-        	  allowNoEntry: true,
-        	  noEntryText: '-- Select Column --',
-        	  store: this._getFilterPropertyStore(columns),
-        	  displayField: 'name',
-        	  valueField: 'name',
-        	  padding: 5,
-        	  listeners: {
-        		  scope: this,
-        		  change: this.addFilterCriteriaBoxes
-        	  }        	  
-          });
-          cb.setValue('Name');
+    	  var columns = this.settings.displayColumns.toString().split(',');  
+          Rally.data.ModelFactory.getModel({
+       	    type: settings.type,
+       	    scope: this,
+       	    success: function(model) {
+       	    	this.typeModel = model;  
+       	    	this.typeModelName = settings.type;
+                this._addFilterControls(columns);
+       	    }
+        	});
 
           /*
            * Grid
@@ -1345,16 +1344,48 @@ Ext.define('CustomApp', {
        * Filter Functions
        * 
        */
+      _addFilterControls: function(columns){
+          
+          
+    	  var cb = this.down('#filter_box').add({
+        	  xtype: 'rallycombobox',
+        	  fieldLabel: 'Filter Results By',
+        	  labelAlign: 'right',
+        	  itemId: 'filter-property',
+        	  allowNoEntry: true,
+        	  noEntryText: '-- Select Column --',
+        	  store: this._getFilterPropertyStore(columns),
+        	  displayField: 'name',
+        	  valueField: 'name',
+        	  padding: 5,
+        	  listeners: {
+        		  scope: this,
+        		  change: this.addFilterCriteriaBoxes
+        	  }        	  
+          });
+          cb.setValue('Name');
+
+      },
       _filterGrid: function(){
     	 var prop = this.down('#filter-property').getValue();
-    	 var op = this.down('#filter-operator').getValue(); 
     	 var val = this.down('#filter-value').getValue(); 
     	 var f = Ext.create('Rally.data.wsapi.Filter',{
-    		    property: prop,
-    		    operator: op,
-    		    value   : val
-    		});
-    	  this.down('#data-grid').filter(f,true,true);
+ 		    property: prop,
+ 		    value   : val
+ 		});
+    	if (this.down('#filter-operator')){
+        	 op = this.down('#filter-operator').getValue(); 
+
+        	 var f = Ext.create('Rally.data.wsapi.Filter',{
+      		    property: prop,
+      		    operator: op,
+      		    value   : val
+      		});
+        	 
+        	 
+    	}
+    	console.log(f);
+    	this.down('#data-grid').filter(f,true,true);
       },
 
       addFilterCriteriaBoxes: function(cb, newValue){
@@ -1364,17 +1395,19 @@ Ext.define('CustomApp', {
           if (this.down('#filter-button')){this.down('#filter-button').destroy();}
           if (this.down('#clear-filter-button')){this.down('#clear-filter-button').destroy();}
          
-    	  var cbo = this.down('#filter_box').add({
-        	  xtype: 'rallycombobox',
-        	  itemId: 'filter-operator',
-        	  displayField: 'name',
-        	  valueField: 'name',
-        	  allowNoEntry: true,
-        	  noEntryText: '-- Select Operator --',
-        	  padding: 5,
-        	  store: this._getFilterOperatorStore(newValue)
-          });
-    	 cbo.setValue('=');
+    	  var operator_store = this._getFilterOperatorStore(newValue);
+    	  if (operator_store != null){
+              var cbo = this.down('#filter_box').add({
+            	  xtype: 'rallycombobox',
+            	  itemId: 'filter-operator',
+            	  displayField: 'name',
+            	  valueField: 'name',
+            	  allowNoEntry: true,
+            	  noEntryText: '-- Select Operator --',
+            	  padding: 5,
+            	  store: this._getFilterOperatorStore(newValue)
+              });
+    	  }
     	  
     	  var filter_value_ctl = this._getFilterValueControl(newValue);
           this.down('#filter_box').add(filter_value_ctl);         
@@ -1400,50 +1433,104 @@ Ext.define('CustomApp', {
       },
       _getFilterValueControl: function(newVal){
     	  
-    	  //var field = 
-    	  
     	  var ctl = {
-        	  xtype: 'rallytextfield',
-        	  padding: 5,
-        	  itemId: 'filter-value'
-          };
-    	  if (newVal && (newVal.toLowerCase() == 'iteration')){
-    		  ctl = {
-    				  xtype: 'rallyiterationcombobox',
-    				  itemId: 'filter-value',
-    	        	  padding: 5
-    		  };
-    	  }
-    	  if (newVal && (newVal.toLowerCase() == 'release')){
-    		  ctl = {
-    				  xtype: 'rallyreleasecombobox',
-    				  itemId: 'filter-value',
-    	        	  padding: 5
-    		  };
-    	  }
-    	  if (newVal && (newVal.toLowerCase() == 'project')){
-    		  ctl = {
-    				  xtype: 'rallyprojectpicker',
-    				  itemId: 'filter-value',
-    	        	  padding: 5
-    		  };
-    	  }
-    	  if (newVal && (newVal.toLowerCase() == 'owner' || newVal.toLowerCase() == 'submittedby')){
-    		  ctl = {
-    			xtype: 'rallyusersearchcombobox',
-    			project: this.getContext().getProject(),
-				itemId: 'filter-value',
-				padding: 5
-    		  };
-    	  }
+            	  xtype: 'rallytextfield',
+            	  padding: 5,
+            	  itemId: 'filter-value'
+              };
+
+    	  var field = this.typeModel.getField(newVal);
+    	  var model_name = this.typeModelName;
+
+    	  if (field){
+    		  console.log(field.name, field.attributeDefinition);
+    		  switch(field.attributeDefinition.AttributeType){
+    		  	case 'BOOLEAN':  
+    		  		ctl = {
+    	            	  xtype: 'rallycombobox',
+    	            	  padding: 5,
+    	            	  itemId: 'filter-value',
+    	            	  store: ['true','false']
+    	              };
+    		  		break;
+    		case 'TEXT':
+    		case 'STRING':
+    		case 'STATE':
+    		case 'RATING':
+    			if (field.attributeDefinition.AttributeType == 'RATING' || 
+    				field.attributeDefinition.AttributeType == 'STATE' ||
+    					field.attributeDefinition.AllowedValues.length > 0){
+    				ctl = {
+	    						xtype: 'rallyfieldvaluecombobox',
+	    						model: model_name,
+	      	            	  	padding: 5,
+	      	            	  	itemId: 'filter-value',
+	    						field: field.name
+	    				};
+	    			console.log('statecontrol',ctl);	
+	
+    			}
+    				break;
+     		case 'OBJECT':
+    			//Release, Iteration, User, Project, artifact links
+    			var schema = field.attributeDefinition.SchemaType;
+    			if (schema == 'Iteration') {
+    				ctl = {
+        				  xtype: 'rallyiterationcombobox',
+        				  itemId: 'filter-value',
+        	        	  padding: 5
+    				};
+    			} else if (schema == 'Release') {
+    				ctl = {
+    				    xtype: 'rallyreleasecombobox',
+        				itemId: 'filter-value',
+        	        	padding: 5
+    				};
+    			} else if (schema == 'User') {
+          		  ctl = {
+              			xtype: 'rallyusersearchcombobox',
+              			project: this.getContext().getProject(),
+          				itemId: 'filter-value',
+          				padding: 5
+              		  };
+          		  } else if (schema == 'Project') {
+            		  ctl = {
+            				  xtype: 'rallyprojectpicker',
+            				  itemId: 'filter-value',
+            	        	  padding: 5
+            		  };
+    				
+    			} else if (schema == 'State'){
+          		  ctl = {
+        				  xtype: 'rallyfieldvaluecombobox',
+        				  itemId: 'filter-value',
+        	        	  padding: 5,
+        	        	  model: model_name,
+        	        	  field: field.name
+        		  };
+
+    			}
+    			break;
+    		case 'DATE':
+    		case 'DECIMAL':
+    		case 'INTEGER':
+    		case 'QUANTITY':
+    		case 'WEB_LINK':
+    		case 'RAW':
+    		case 'BINARY_DATA':
+    		case 'COLLECTION':
+    		default:
+    		  }
+    	  }// if field
     	  return ctl; 
       },
       _clearGridFilter: function(){
     	  this.down('#data-grid').getStore().clearFilter();
     	  this.down('#filter-property').setValue(null);
-    	  this.down('#filter-operator').setValue(null);
+    	  if (this.down('#filter-operator')){
+        	  this.down('#filter-operator').setValue(null);
+    	  }
     	  this.down('#filter-value').setValue('');
-
       },
       _getFilterPropertyStore: function(columns){
 		  	this.logger.log('_getFilterPropertyStore');
@@ -1461,15 +1548,23 @@ Ext.define('CustomApp', {
       },
 
       _getFilterOperatorStore: function(newVal){
-		  	this.logger.log('_getFilterOperatorStore');
 
-		  	var data = [ {'name':'='}, {'name':'contains'}];
-		  	if (newVal && (newVal.toLowerCase() == 'owner' || newVal.toLowerCase() == 'submittedby' ||
-		  			newVal.toLowerCase() == 'project' || newVal.toLowerCase() == 'iteration' || 
-		  			newVal.toLowerCase() == 'release')){
-		  		data = [ {'name':'='}];
-		  	}
-		  	
+		   	var field = this.typeModel.getField(newVal);
+	    	var model_name = this.typeModelName;
+		  	this.logger.log('_getFilterOperatorStore', newVal, field, model_name);
+	    	var data = [];
+	    	if (field) {
+	    		var operators = field.attributeDefinition.AllowedQueryOperators;
+	    		Ext.each(operators, function(op){
+	    			if (op.OperatorName && op.OperatorName.length > 0 ){
+		    			data.push({'name':op.OperatorName});	    				
+	    			}
+
+	    		});
+	    	}
+	    	if (data.length == 0) {
+	    		return null; 
+	    	}
 			var fb_store = Ext.create('Rally.data.custom.Store', {
 		        data: data,
 		        autoLoad: true

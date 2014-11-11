@@ -156,15 +156,15 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
         	}
         },
         getProcessDefinitionType: function(key){
-        	var process_parts = key.split('.');
-        	if (process_parts.length > 3){
-        		return process_parts[3].toLowerCase();
+        	if (key){
+            	var process_parts = key.split('.');
+            	if (process_parts.length > 3){
+            		return process_parts[3].toLowerCase();
+            	}
         	}
         	return '';
         }
-    
     }
- 
 });
 
 
