@@ -51,16 +51,15 @@ Ext.define('CustomApp', {
     			});
     	return deferred.promise;
     },
-    _getProcessListStore: function(){
+    _getProcessListStore: function(type){
     	var data = [];
-    	
     	Ext.each(this.processList.getKeys(), function(key){
-    		data.push({'key': key, 'name':this.processList.get(key).processName});
-    	},this);
-    	
-    	return Ext.create('Rally.data.custom.Store',{
-    		data: data
-    	});
+    		var process_type = Rally.technicalservices.ProcessDefinition.getProcessDefinitionType(key);
+    		if ((type == undefined) || (process_type == type.toLowerCase())){
+    	   		data.push([key, this.processList.get(key).processName]);
+    		}
+     	},this);
+    	return data;
     },
     _configureProcess: function(){
    	    var deferred = Ext.create('Deft.Deferred');
@@ -80,23 +79,14 @@ Ext.define('CustomApp', {
     },
     getSettingsFields: function(){
     	this.logger.log('getSettingsFields');
-    	var store = this._getProcessListStore();
-
-        var filters = Ext.create('Rally.data.wsapi.Filter',{
-            property:'Name',
-            operator: 'contains',
-            value: 'rally.technicalservices.process-initiator.'
-        });
-        filters = filters.and(Ext.create('Rally.data.wsapi.Filter',{
-            property:'Workspace',
-            value: this.getContext().getWorkspace()}));
-    	
+    	var me = this; 
+    	var process_store = this._getProcessListStore();
         return [{
                     name: 'type',
                     xtype:'rallycombobox',
                     displayField: 'DisplayName',
                     storeConfig: {
-                        model:'TypeDefinition',
+                       model:'TypeDefinition',
                        filters: [{property: 'Restorable',value:true},
                                  {property: 'Creatable', value: true}]
                     },
@@ -104,31 +94,46 @@ Ext.define('CustomApp', {
                     fieldLabel: 'Rally Type:',
                     valueField:'TypePath',
             		labelWidth: 100,
-            		value: 'Defect',
-                    listeners: {
-                    	change: function(cb, newValue){
-                    		console.log('change',newValue);
-                    	}
-                    },
+            		width: 400,
                     bubbleEvents: ['change', 'ready'],
                     readyEvent: 'ready'
-//                },{
-//	                name: 'processes',
-//	                xtype: 'rallymultiobjectpicker',
-//	                labelWidth: 100,
-//	                fieldLabel: 'Processes:',
-//	                storeConfig: {
-//	                	model: 'preference',
-//	                	fetch: ['Name'],
-//	                	filters: filters,
-//	                	pageSize: 20
-//	                 }
+                },{
+ 	                name: 'processes',
+	                xtype: 'combobox',
+	                labelWidth: 100,
+	                fieldLabel: 'Processes:',
+	                multiSelect: true,
+	                editable: false, 
+	                store: process_store,
+	                displayField: 'name',
+	                valueField: 'key',
+	                emptyText: '-- No Processes Selected --',
+	                width: 400,
+	                queryMode: 'local',
+	                triggerAction: 'query',
+	                lastQuery: '',
+	                handlesEvents: {
+	                	 change: function(cb, newVal){
+	                		 this.lastQuery = Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(newVal);  
+	                	 },
+	                	 ready: function(cb, newVal){
+	                		 this.lastQuery = Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(newVal);  
+	                	 }
+	                 },
+	                 listeners: {
+	                	 beforequery: function(queryPlan){
+	                		 queryPlan.query = this.lastQuery;
+
+	                		 console.log(this.lastQuery, queryPlan);
+	                	 }
+	                 }
         		},{
         			name: 'displayColumns',
         			xtype: 'rallyfieldpicker',
         			fieldLabel: 'Display Columns:',
         			modelTypes: ['Defect'],
         			labelWidth: 100,
+        			minWidth: 400,
         			autoExpand: false,
         			alwaysExpanded: false,
         			fieldBlackList: this.displayFieldBlacklist, 
@@ -181,19 +186,22 @@ Ext.define('CustomApp', {
       onSettingsUpdate: function (settings){
           this.logger.log('onSettingsUpdate', settings);
           
-//          var process_def_keys = [];
-//          if (settings.processDefinitions) {
-//              process_def_keys = settings.processDefinitions.split('\n');
-//          }
-        var process_def_keys = [];
-        if (settings.type) {
-            Ext.each(this.processList.getKeys(), function(key){
-            	if (this.processList.get(key).rallyType.toLowerCase() == settings.type.toLowerCase()){
-            		process_def_keys.push(key);
-            	}
-            },this);
-         }
-        
+          var process_def_keys = [];
+          if (settings.processes && settings.type) {
+                process_def_keys = settings.processes;
+	            
+                //Hokey workaround:  Verify the selected processes match the type
+	            Ext.each(process_def_keys, function(key){
+	            	if (Rally.technicalservices.ProcessDefinition.getProcessDefinitionType(key) != 
+	            		settings.type.toLowerCase()){
+		            		var index = process_def_keys.indexOf(key);
+		            		if(index != -1){
+		            			process_def_keys.splice(index, 1);
+		            		}
+		            	}
+	            },this);
+          }
+          
           var process_defs = [];
           Ext.each(process_def_keys, function(pdk){
         	  var pd = Ext.create('Rally.technicalservices.ProcessDefinition',{}, this.processList.get(pdk));

@@ -154,7 +154,15 @@ Ext.define('Rally.technicalservices.ProcessDefinition',{
         	} else {
             	return Rally.technicalservices.ProcessDefinition.PROCESS_DEFINITION_PREFIX;
         	}
+        },
+        getProcessDefinitionType: function(key){
+        	var process_parts = key.split('.');
+        	if (process_parts.length > 3){
+        		return process_parts[3].toLowerCase();
+        	}
+        	return '';
         }
+    
     }
  
 });
