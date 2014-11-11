@@ -117,14 +117,14 @@ Ext.define('CustomApp', {
 	                	 change: function(cb, newVal){
 	                		 this.lastQuery = Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(newVal);  
 	                	 },
-	                	 ready: function(cb, newVal){
-	                		 this.lastQuery = Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(newVal);  
+	                	 ready: function(cb){
+	                		 this.lastQuery = Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(cb.getValue());  
 	                	 }
 	                 },
 	                 listeners: {
 	                	 beforequery: function(queryPlan){
 	                		 queryPlan.query = this.lastQuery;
-
+	                		 queryPlan.forceAll = true;
 	                		 console.log(this.lastQuery, queryPlan);
 	                	 }
 	                 }

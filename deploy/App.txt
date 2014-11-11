@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Nov 11 2014 12:34:12 GMT-0800 (PST) -->
+    <!--  Build Date: Tue Nov 11 2014 12:52:00 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Nov 11 2014 12:34:12 GMT-0800 (PST)";
-        var CHECKSUM = 58021936997;
+        var APP_BUILD_DATE = "Tue Nov 11 2014 12:52:00 GMT-0800 (PST)";
+        var CHECKSUM = 58207893396;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -604,7 +604,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     logger: new Rally.technicalservices.Logger(),
     autoShow: true,
     draggable: true,
-    width: 400,
+    width: 600,
     processDefinition: null,
     record: null,
     projectRef: null,
@@ -739,8 +739,9 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	var component = {
        		 itemId: field_name,
        		 fieldLabel: field.displayName,
-       		 labelWidth: 150,
-       		 minWidth: 400
+       		 labelWidth: 100,
+       		 minWidth: 400,
+       		 width: 550
         };
 
     	//"BINARY_DATA", "BOOLEAN", "COLLECTION", "DATE", "DECIMAL", "INTEGER", "OBJECT", "QUANTITY", "RATING", "STATE", "STRING", "TEXT", "WEB_LINK", "RAW"
@@ -750,6 +751,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			break;
     		case 'TEXT':
     			component['xtype'] = 'textareafield';
+    			component['height'] = 100;
     			break;
     		case 'STRING':
     		case 'STATE':
@@ -1151,14 +1153,14 @@ Ext.define('CustomApp', {
 	                	 change: function(cb, newVal){
 	                		 this.lastQuery = Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(newVal);  
 	                	 },
-	                	 ready: function(cb, newVal){
-	                		 this.lastQuery = Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(newVal);  
+	                	 ready: function(cb){
+	                		 this.lastQuery = Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(cb.getValue());  
 	                	 }
 	                 },
 	                 listeners: {
 	                	 beforequery: function(queryPlan){
 	                		 queryPlan.query = this.lastQuery;
-
+	                		 queryPlan.forceAll = true;
 	                		 console.log(this.lastQuery, queryPlan);
 	                	 }
 	                 }

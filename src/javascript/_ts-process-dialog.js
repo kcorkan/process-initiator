@@ -3,7 +3,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     logger: new Rally.technicalservices.Logger(),
     autoShow: true,
     draggable: true,
-    width: 400,
+    width: 600,
     processDefinition: null,
     record: null,
     projectRef: null,
@@ -138,8 +138,9 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     	var component = {
        		 itemId: field_name,
        		 fieldLabel: field.displayName,
-       		 labelWidth: 150,
-       		 minWidth: 400
+       		 labelWidth: 100,
+       		 minWidth: 400,
+       		 width: 550
         };
 
     	//"BINARY_DATA", "BOOLEAN", "COLLECTION", "DATE", "DECIMAL", "INTEGER", "OBJECT", "QUANTITY", "RATING", "STATE", "STRING", "TEXT", "WEB_LINK", "RAW"
@@ -149,6 +150,7 @@ Ext.define('Rally.technicalservices.dialog.Process',{
     			break;
     		case 'TEXT':
     			component['xtype'] = 'textareafield';
+    			component['height'] = 100;
     			break;
     		case 'STRING':
     		case 'STATE':
