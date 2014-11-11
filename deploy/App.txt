@@ -3,11 +3,11 @@
 <head>
     <title>Process Initiator</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Nov 11 2014 11:50:08 GMT-0800 (PST) -->
+    <!--  Build Date: Tue Nov 11 2014 12:34:12 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Nov 11 2014 11:50:08 GMT-0800 (PST)";
-        var CHECKSUM = 57190232432;
+        var APP_BUILD_DATE = "Tue Nov 11 2014 12:34:12 GMT-0800 (PST)";
+        var CHECKSUM = 58021936997;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
@@ -1090,10 +1090,11 @@ Ext.define('CustomApp', {
     	Ext.each(this.processList.getKeys(), function(key){
     		var process_type = Rally.technicalservices.ProcessDefinition.getProcessDefinitionType(key);
     		if ((type == undefined) || (process_type == type.toLowerCase())){
-    	   		data.push([key, this.processList.get(key).processName]);
+    	   		data.push({key: key, name: this.processList.get(key).processName});
+    			//data.push([key, this.processList.get(key).processName]);
     		}
      	},this);
-    	return data;
+    	return { fields: ['key','name'], data: data};
     },
     _configureProcess: function(){
    	    var deferred = Ext.create('Deft.Deferred');
@@ -1223,7 +1224,10 @@ Ext.define('CustomApp', {
           var process_def_keys = [];
           if (settings.processes && settings.type) {
                 process_def_keys = settings.processes;
-	            
+     
+	            if ((process_def_keys instanceof Array) == false){
+	            	process_def_keys = process_def_keys.split(',');
+	            }
                 //Hokey workaround:  Verify the selected processes match the type
 	            Ext.each(process_def_keys, function(key){
 	            	if (Rally.technicalservices.ProcessDefinition.getProcessDefinitionType(key) != 
@@ -1236,6 +1240,7 @@ Ext.define('CustomApp', {
 	            },this);
           }
           
+          this.logger.log('processList', this.processList, process_def_keys);
           var process_defs = [];
           Ext.each(process_def_keys, function(pdk){
         	  var pd = Ext.create('Rally.technicalservices.ProcessDefinition',{}, this.processList.get(pdk));

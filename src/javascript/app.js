@@ -56,10 +56,11 @@ Ext.define('CustomApp', {
     	Ext.each(this.processList.getKeys(), function(key){
     		var process_type = Rally.technicalservices.ProcessDefinition.getProcessDefinitionType(key);
     		if ((type == undefined) || (process_type == type.toLowerCase())){
-    	   		data.push([key, this.processList.get(key).processName]);
+    	   		data.push({key: key, name: this.processList.get(key).processName});
+    			//data.push([key, this.processList.get(key).processName]);
     		}
      	},this);
-    	return data;
+    	return { fields: ['key','name'], data: data};
     },
     _configureProcess: function(){
    	    var deferred = Ext.create('Deft.Deferred');
@@ -189,7 +190,10 @@ Ext.define('CustomApp', {
           var process_def_keys = [];
           if (settings.processes && settings.type) {
                 process_def_keys = settings.processes;
-	            
+     
+	            if ((process_def_keys instanceof Array) == false){
+	            	process_def_keys = process_def_keys.split(',');
+	            }
                 //Hokey workaround:  Verify the selected processes match the type
 	            Ext.each(process_def_keys, function(key){
 	            	if (Rally.technicalservices.ProcessDefinition.getProcessDefinitionType(key) != 
@@ -202,6 +206,7 @@ Ext.define('CustomApp', {
 	            },this);
           }
           
+          this.logger.log('processList', this.processList, process_def_keys);
           var process_defs = [];
           Ext.each(process_def_keys, function(pdk){
         	  var pd = Ext.create('Rally.technicalservices.ProcessDefinition',{}, this.processList.get(pdk));
