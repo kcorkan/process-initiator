@@ -55,7 +55,7 @@ Ext.define('CustomApp', {
     	Ext.each(this.processList.getKeys(), function(key){
     		var process_type = Rally.technicalservices.ProcessDefinition.getProcessDefinitionType(key);
     		if ((type == undefined) || (process_type == type.toLowerCase())){
-    	   		data.push({key: key, name: this.processList.get(key).processName});
+    	   		data.push({'key': key, 'name': this.processList.get(key).processName});
     			//data.push([key, this.processList.get(key).processName]);
     		}
      	},this);
@@ -81,6 +81,59 @@ Ext.define('CustomApp', {
     	return ['Changesets','Description','Notes','RevisionHistory','Tags','Attachments',
          'Tasks','Discussion','DragAndDropRank','LatestDiscussionAgeInMinutes'];
     },
+    refreshSettings: function(thisApp, cbType){
+		console.log(thisApp.settings);
+    	var outer_box = cbType.ownerCt;
+		if ( outer_box && outer_box.down('#process-settings') ) {
+			outer_box.down('#process-settings').destroy();
+		}
+		if ( outer_box && outer_box.down('#display-columns') ) {
+			outer_box.down('#display-columns').destroy();
+		}
+		
+		var process_store = thisApp._getProcessListStore(cbType.getValue());
+
+		outer_box.add({
+	            name: 'processes',
+                xtype: 'combobox',
+                itemId: 'process-settings',
+                labelWidth: 100,
+                fieldLabel: 'Processes:',
+                multiSelect: true,
+                editable: false, 
+                store: process_store,
+                displayField: 'name',
+                valueField: 'key',
+                emptyText: '-- No Processes Selected --',
+                width: 400,
+                queryMode: 'local',
+                //value: thisApp.settings.processes
+		});
+		outer_box.down('#process-settings').setValue('');
+		outer_box.add({
+			name: 'displayColumns',
+			itemId: 'display-columns',
+			xtype: 'rallyfieldpicker',
+			fieldLabel: 'Display Columns:',
+			modelTypes: [cbType.getValue()],
+			labelWidth: 100,
+			minWidth: 400,
+			autoExpand: false,
+			alwaysExpanded: false,
+			fieldBlackList: thisApp.getDisplayFieldBlacklist(),
+			value: thisApp.settings.displayColumns,
+			handlesEvents: {
+				change: function(cb){
+					this.modelTypes = [cb.getValue()];
+					this.refreshWithNewContext(this.context);
+				},
+				ready: function(cb){
+					this.modelTypes = [cb.getValue()];
+					this.refreshWithNewContext(this.context);
+				}
+			}
+         });    	
+    },
     getSettingsFields: function(){
     	this.logger.log('getSettingsFields');
     	var me = this; 
@@ -102,62 +155,33 @@ Ext.define('CustomApp', {
                     bubbleEvents: ['change', 'ready'],
                     readyEvent: 'ready',
                     listeners: {
-                    	//scope: this,
                     	change: function(cb, newValue){
-                    		console.log ('_appSettings.items',me._appSettings.items);
+                    		me.refreshSettings(me, cb);
+                    	},
+                    	ready: function(cb){
+                    		me.refreshSettings(me, cb);
                     	}
                     }
-                },{
- 	                name: 'processes',
-	                xtype: 'combobox',
-	                itemId: 'process-settings',
-	                labelWidth: 100,
-	                fieldLabel: 'Processes:',
-	                multiSelect: true,
-	                editable: false, 
-	                store: process_store,
-	                displayField: 'name',
-	                valueField: 'key',
-	                emptyText: '-- No Processes Selected --',
-	                width: 400,
-	                queryMode: 'local',
-	                triggerAction: 'query',
-	                lastQuery: '',
-	                handlesEvents: {
-	                	 change: function(cb, newVal){
-	                		 this.lastQuery = Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(newVal);  
-	                	 },
-	                	 ready: function(cb){
-	                		 this.lastQuery = Rally.technicalservices.ProcessDefinition.getProcessDefinitionPrefix(cb.getValue());  
-	                	 }
-	                 },
-	                 listeners: {
-	                	 beforequery: function(queryPlan){
-	                		 queryPlan.query = this.lastQuery;
-	                		 queryPlan.forceAll = true;
-	                		 console.log(this.lastQuery, queryPlan);
-	                	 }
-	                 }
-        		},{
-        			name: 'displayColumns',
-        			xtype: 'rallyfieldpicker',
-        			fieldLabel: 'Display Columns:',
-        			modelTypes: ['Defect'],
-        			labelWidth: 100,
-        			minWidth: 400,
-        			autoExpand: false,
-        			alwaysExpanded: false,
-        			fieldBlackList: this.getDisplayFieldBlacklist(), 
-        			handlesEvents: {
-        				change: function(cb, newVal){
-        					this.modelTypes = [newVal];
-        					this.refreshWithNewContext(this.context);
-        				},
-        				ready: function(cb){
-        					this.modelTypes = [cb.getValue()];
-        					this.refreshWithNewContext(this.context);
-        				}
-        			}
+		        },{
+		            name: 'processes',
+		            xtype: 'textfield',
+		            itemId: 'process-settings',
+		            labelWidth: 100,
+		            fieldLabel: 'Processes:',
+		            minWidth: 400,
+		            listeners: {
+		            	
+		            }
+				},{
+					name: 'displayColumns',
+					itemId: 'display-columns',
+					xtype: 'textfield',
+					fieldLabel: 'Display Columns:',
+					labelWidth: 100,
+					minWidth: 400,
+					listeners: {
+						
+					}
         		}];
     },
     isExternal: function(){
