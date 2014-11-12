@@ -47,12 +47,24 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
  * getColumnConfigurations: Returns an array of column objects to render in the grid.  
  * 
  */
-    getColumnConfigurations: function(displayColumns){
+    _getDisplayName: function(model, column_name){
+		this.logger.log('_getDisplayName', column_name)
+		if (model) {
+			var field = model.getField(column_name);
+			if (field){
+				return field.displayName;
+			}
+		} 
+		return column_name;  
+    },
+    
+    getColumnConfigurations: function(model, displayColumns){
     	this.logger.log('getColumnConfigurations');
+
     	var me = this;
     	
       	var columns = [{ 
-            text: 'FormattedID',
+            text: 'Formatted ID',
             dataIndex: 'FormattedID',
             width: 50,
         },{
@@ -62,8 +74,10 @@ Ext.define('Rally.technicalservices.ProcessDriver',{
         }]; 
       	
       	Ext.each(displayColumns, function(dc){
+      		console.log('dc',dc);
       		if (dc.toLowerCase() != 'name' && dc.toLowerCase() != 'formattedid'){
-      			columns.push({text: dc, dataIndex: dc});
+      			var display_text = this._getDisplayName(model, dc);
+      			columns.push({text:display_text, dataIndex: dc});
       		}
       	},this);
       	

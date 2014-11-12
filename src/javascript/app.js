@@ -16,9 +16,7 @@ Ext.define('CustomApp', {
             displayColumns: 'Name,FormattedID'
         }
     },
-    
-    displayFieldBlacklist: ['Changesets','Description','Notes','RevisionHistory','Tags','Attachments',
-                            'Tasks','Discussion','DragAndDropRank','LatestDiscussionAgeInMinutes'],
+
     launch: function() {
     	this._fetchProcessList().then({
     		scope: this,
@@ -78,6 +76,10 @@ Ext.define('CustomApp', {
     	});
 	   	dlg.show();    
 	   	
+    },
+    getDisplayFieldBlacklist: function(){
+    	return ['Changesets','Description','Notes','RevisionHistory','Tags','Attachments',
+         'Tasks','Discussion','DragAndDropRank','LatestDiscussionAgeInMinutes'];
     },
     getSettingsFields: function(){
     	this.logger.log('getSettingsFields');
@@ -145,7 +147,7 @@ Ext.define('CustomApp', {
         			minWidth: 400,
         			autoExpand: false,
         			alwaysExpanded: false,
-        			fieldBlackList: this.displayFieldBlacklist, 
+        			fieldBlackList: this.getDisplayFieldBlacklist(), 
         			handlesEvents: {
         				change: function(cb, newVal){
         					this.modelTypes = [newVal];
@@ -243,7 +245,7 @@ Ext.define('CustomApp', {
           add_new_btn.on('click',process_driver.addNew, process_driver);
           
           /*
-           * Filter Controls 
+           * Filter and Grid Controls 
            */ 
     	  var columns = this.settings.displayColumns.toString().split(',');  
           Rally.data.ModelFactory.getModel({
@@ -252,22 +254,25 @@ Ext.define('CustomApp', {
        	    success: function(model) {
        	    	this.typeModel = model;  
        	    	this.typeModelName = settings.type;
+       	    	this._addGrid(process_driver, columns, settings.type);
                 this._addFilterControls(columns);
        	    }
         	});
 
+      },
+      _addGrid: function(process_driver, columns, type){
           /*
            * Grid
            */
           var fetch_fields = Ext.Array.merge(process_driver.getFetchFields(), columns);
           var store_configs = {
-              model: settings.type,
+              model: type,
               fetch: process_driver.getFetchFields(),
               autoLoad: true,
               pageSize: 500,
           };
           
-          if (settings.type.toLowerCase() == 'hierarchicalrequirement'){
+          if (type.toLowerCase() == 'hierarchicalrequirement'){
         	  store_configs['groupField'] = 'Feature';
         	  store_configs['groupDir'] = 'ASC';
               store_configs['getGroupString'] = function(record) {
@@ -285,7 +290,7 @@ Ext.define('CustomApp', {
                   store: artifact_store,
                   itemId: 'data-grid',
                   enableBlockedReasonPopover: false,
-                  columnCfgs: process_driver.getColumnConfigurations(columns),
+                  columnCfgs: process_driver.getColumnConfigurations(this.typeModel, columns),
                   showRowActionsColumn: false,
                   enableBulkEdit: false,
                   enableRanking: false,
@@ -296,13 +301,14 @@ Ext.define('CustomApp', {
                   }
           };
           
-          if (settings.type.toLowerCase() == 'hierarchicalrequirement'){
+          if (type.toLowerCase() == 'hierarchicalrequirement'){
         	  grid_configs['features'] =  [{
                   ftype: 'groupingsummary',
                   groupHeaderTpl: '{name} ({rows.length})'
               }];
           }
     	  this.down('#grid_box').add(grid_configs);
+    	  
       },
       /*
        * Filter Functions
